@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
-import { createFolder, uploadFile } from '@/lib/drive'
+import { createFolder, uploadFile, getAreaColor } from '@/lib/drive'
 import { createClientEntry } from '@/lib/notion'
 import { combineDniImages, singleDniToPdf, convertImageToPdf } from '@/lib/imageUtils'
 
@@ -101,8 +101,9 @@ export async function POST(request: NextRequest) {
     const areaStr = inmueble.area.toUpperCase()
     const folderName = `${titleCase(titular1.nombre)} ${titleCase(titular1.apellido1)} - ${calleStr} ${areaStr}`
 
-    // Create Drive folder
-    const folderId = await createFolder(folderName, PARENT_FOLDER_ID)
+    // Create Drive folder with color based on area
+    const folderColor = getAreaColor(inmueble.area)
+    const folderId = await createFolder(folderName, PARENT_FOLDER_ID, folderColor)
 
     // Handle DNI images
     const dniFrontFile = formData.get('dniFront') as File | null

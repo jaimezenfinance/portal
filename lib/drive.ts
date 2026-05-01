@@ -18,17 +18,31 @@ function getAuth() {
   return oauth2Client
 }
 
-export async function createFolder(name: string, parentId: string): Promise<string> {
+export async function createFolder(name: string, parentId: string, color?: string): Promise<string> {
   const drive = google.drive({ version: 'v3', auth: getAuth() })
   const res = await drive.files.create({
     requestBody: {
       name,
       mimeType: 'application/vnd.google-apps.folder',
       parents: [parentId],
+      ...(color ? { folderColorRgb: color } : {}),
     },
     fields: 'id',
   })
   return res.data.id!
+}
+
+const AREA_COLORS: Record<string, string> = {
+  'La Línea':    '#4986e7', // azul
+  'Algeciras':   '#ff7537', // naranja
+  'San Roque':   '#9a9cff', // morado
+  'Los Barrios': '#16a765', // verde
+  'Castellar':   '#d06b64', // rojo
+  'Otro':        '#1a1a1a', // negro
+}
+
+export function getAreaColor(area: string): string | undefined {
+  return AREA_COLORS[area]
 }
 
 export async function uploadFile(
