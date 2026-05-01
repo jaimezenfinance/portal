@@ -262,7 +262,7 @@ export default function ExpedientePage() {
             value={dni}
             onChange={e => setDni(e.target.value.toUpperCase())}
             placeholder="12345678A"
-            className="w-full border border-gray-300 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] uppercase"
+            className="w-full border border-gray-300 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] uppercase placeholder:text-gray-300"
           />
         </div>
         {error && <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm">{error}</div>}

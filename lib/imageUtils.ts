@@ -4,13 +4,25 @@ import { PDFDocument } from 'pdf-lib'
 async function trimImage(buffer: Buffer): Promise<Buffer> {
   try {
     return await sharp(buffer)
+      .rotate() // auto-rotate based on EXIF orientation
       .trim({ background: '#ffffff', threshold: 15 })
       .jpeg({ quality: 92 })
       .toBuffer()
   } catch {
-    // If trim fails (e.g. PDF input), return original
     return buffer
   }
+}
+
+/** Rotates image to landscape (horizontal) if it is portrait */
+async function forceLandscape(buffer: Buffer): Promise<Buffer> {
+  const meta = await sharp(buffer).metadata()
+  const w = meta.width || 0
+  const h = meta.height || 0
+  if (h > w) {
+    // Portrait → rotate 90° clockwise to landscape
+    return await sharp(buffer).rotate(90).jpeg({ quality: 92 }).toBuffer()
+  }
+  return buffer
 }
 
 async function imageToPdf(jpegBuffer: Buffer): Promise<Buffer> {
@@ -25,8 +37,8 @@ async function imageToPdf(jpegBuffer: Buffer): Promise<Buffer> {
 }
 
 export async function combineDniImages(frontBuffer: Buffer, backBuffer: Buffer): Promise<Buffer> {
-  const front = await trimImage(frontBuffer)
-  const back = await trimImage(backBuffer)
+  const front = await forceLandscape(await trimImage(frontBuffer))
+  const back = await forceLandscape(await trimImage(backBuffer))
 
   const frontMeta = await sharp(front).metadata()
   const backMeta = await sharp(back).metadata()
@@ -64,7 +76,7 @@ export async function combineDniImages(frontBuffer: Buffer, backBuffer: Buffer):
 }
 
 export async function singleDniToPdf(buffer: Buffer): Promise<Buffer> {
-  const trimmed = await trimImage(buffer)
+  const trimmed = await forceLandscape(await trimImage(buffer))
   return imageToPdf(trimmed)
 }
 

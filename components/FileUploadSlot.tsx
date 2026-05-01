@@ -46,7 +46,11 @@ export default function FileUploadSlot({ label, fieldName, required, multiple, f
             : 'border-[#ffbeb8] text-gray-500 hover:border-[#0f3693] hover:bg-blue-50'
         }`}
       >
-        {alreadyUploaded && files.length === 0 ? '🔄 Reemplazar archivo' : '📎 Pincha para subir'}
+        {alreadyUploaded && files.length === 0
+          ? '🔄 Reemplazar archivo'
+          : multiple
+            ? '📎 Pincha para subir (puedes seleccionar varios a la vez)'
+            : '📎 Pincha para subir'}
       </button>
       <input
         ref={inputRef}

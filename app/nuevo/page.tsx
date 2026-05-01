@@ -369,26 +369,27 @@ export default function NuevoPage() {
             <h2 className="text-xl font-semibold text-[#0f3693] mb-2">Inmueble</h2>
             <p className="text-gray-500 text-sm mb-4">Datos de la propiedad a financiar</p>
 
-            <div className="mb-4">
-              <label className="block text-xs font-medium text-gray-600 mb-1">Precio de compra (€) <span className="text-red-500">*</span></label>
-              <input
-                type="number"
-                value={inmueble.precioCompra}
-                onChange={e => handleInmuebleChange('precioCompra', e.target.value)}
-                placeholder="150000"
-                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-xs font-medium text-gray-600 mb-1">Entrada / Arras (€)</label>
-              <input
-                type="number"
-                value={inmueble.entradaArras}
-                onChange={e => handleInmuebleChange('entradaArras', e.target.value)}
-                placeholder="10000"
-                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300"
-              />
+            <div className="flex gap-3 mb-4">
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Precio de compra (€) <span className="text-red-500">*</span></label>
+                <input
+                  type="number"
+                  value={inmueble.precioCompra}
+                  onChange={e => handleInmuebleChange('precioCompra', e.target.value)}
+                  placeholder="150000"
+                  className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Entrada / Arras (€)</label>
+                <input
+                  type="number"
+                  value={inmueble.entradaArras}
+                  onChange={e => handleInmuebleChange('entradaArras', e.target.value)}
+                  placeholder="10000"
+                  className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300"
+                />
+              </div>
             </div>
 
             <div className="mb-4">
