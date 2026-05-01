@@ -1,0 +1,76 @@
+import { Client } from '@notionhq/client'
+
+function getNotion() {
+  const token = process.env.NOTION_TOKEN
+  if (!token || token.trim() === '') {
+    throw new Error(
+      'NOTION_TOKEN no está configurado. ' +
+      'Añade tu token de integración de Notion en .env.local'
+    )
+  }
+  return new Client({ auth: token })
+}
+
+export async function createClientEntry(data: {
+  name: string
+  dni: string
+  telefono: string
+  email: string
+  area: string
+  situacion?: string
+  direccion?: string
+  precioCompra?: number
+}): Promise<void> {
+  const databaseId = process.env.NOTION_DATABASE_ID!
+  const notion = getNotion()
+  const properties: Record<string, any> = {
+    Name: {
+      title: [{ text: { content: data.name } }],
+    },
+    DNI: {
+      rich_text: [{ text: { content: data.dni } }],
+    },
+    Teléfono: {
+      phone_number: data.telefono,
+    },
+    Email: {
+      email: data.email,
+    },
+    Área: {
+      select: { name: data.area },
+    },
+    Situación: {
+      rich_text: [{ text: { content: data.situacion || '' } }],
+    },
+    Dirección: {
+      rich_text: [{ text: { content: data.direccion || '' } }],
+    },
+    Status: {
+      status: { name: 'Documentos' },
+    },
+  }
+  if (data.precioCompra !== undefined) {
+    properties['Valor Compra'] = { number: data.precioCompra }
+  }
+  await notion.pages.create({
+    parent: { database_id: databaseId },
+    properties,
+  })
+}
+
+export async function findClientByDni(dni: string): Promise<{ name: string; folderId?: string } | null> {
+  const databaseId = process.env.NOTION_DATABASE_ID!
+  const notion = getNotion()
+  const res = await notion.databases.query({
+    database_id: databaseId,
+    filter: {
+      property: 'DNI',
+      rich_text: { equals: dni },
+    },
+  })
+  if (res.results.length === 0) return null
+  const page = res.results[0] as any
+  const name = page.properties?.Name?.title?.[0]?.text?.content || ''
+  const folderId = page.properties?.FolderID?.rich_text?.[0]?.text?.content || undefined
+  return { name, folderId }
+}

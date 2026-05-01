@@ -1,0 +1,69 @@
+import sharp from 'sharp'
+import { PDFDocument } from 'pdf-lib'
+
+async function trimImage(buffer: Buffer): Promise<Buffer> {
+  try {
+    return await sharp(buffer)
+      .trim({ background: '#ffffff', threshold: 15 })
+      .jpeg({ quality: 92 })
+      .toBuffer()
+  } catch {
+    // If trim fails (e.g. PDF input), return original
+    return buffer
+  }
+}
+
+async function imageToPdf(jpegBuffer: Buffer): Promise<Buffer> {
+  const pdfDoc = await PDFDocument.create()
+  const meta = await sharp(jpegBuffer).metadata()
+  const img = await pdfDoc.embedJpg(jpegBuffer)
+  const w = meta.width || img.width
+  const h = meta.height || img.height
+  const page = pdfDoc.addPage([w, h])
+  page.drawImage(img, { x: 0, y: 0, width: w, height: h })
+  return Buffer.from(await pdfDoc.save())
+}
+
+export async function combineDniImages(frontBuffer: Buffer, backBuffer: Buffer): Promise<Buffer> {
+  const front = await trimImage(frontBuffer)
+  const back = await trimImage(backBuffer)
+
+  const frontMeta = await sharp(front).metadata()
+  const backMeta = await sharp(back).metadata()
+  const targetHeight = Math.max(frontMeta.height || 800, backMeta.height || 800)
+
+  const frontResized = await sharp(front)
+    .resize({ height: targetHeight, fit: 'contain', background: { r: 255, g: 255, b: 255 } })
+    .jpeg({ quality: 92 })
+    .toBuffer()
+  const backResized = await sharp(back)
+    .resize({ height: targetHeight, fit: 'contain', background: { r: 255, g: 255, b: 255 } })
+    .jpeg({ quality: 92 })
+    .toBuffer()
+
+  const fMeta = await sharp(frontResized).metadata()
+  const bMeta = await sharp(backResized).metadata()
+  const totalWidth = (fMeta.width || 0) + (bMeta.width || 0) + 20
+
+  const combined = await sharp({
+    create: {
+      width: totalWidth,
+      height: targetHeight,
+      channels: 3,
+      background: { r: 255, g: 255, b: 255 },
+    },
+  })
+    .composite([
+      { input: frontResized, left: 0, top: 0 },
+      { input: backResized, left: (fMeta.width || 0) + 20, top: 0 },
+    ])
+    .jpeg({ quality: 92 })
+    .toBuffer()
+
+  return imageToPdf(combined)
+}
+
+export async function singleDniToPdf(buffer: Buffer): Promise<Buffer> {
+  const trimmed = await trimImage(buffer)
+  return imageToPdf(trimmed)
+}
