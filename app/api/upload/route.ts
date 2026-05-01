@@ -3,7 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import { createFolder, uploadFile, getAreaColor } from '@/lib/drive'
 import { createClientEntry } from '@/lib/notion'
-import { combineDniImages, singleDniToPdf, convertImageToPdf } from '@/lib/imageUtils'
+import { combineDniImages, singleDniToPdf, convertImageToPdf, mergeFilesToPdf } from '@/lib/imageUtils'
 
 export const maxDuration = 60
 
@@ -68,19 +68,19 @@ export async function POST(request: NextRequest) {
       }
 
       for (const field of ['nominas', 'renta', 'vidaLaboral', 'contrato', 'notaSimple', 'arras', 'extra1', 'extra2', 'extra3']) {
-        const files = formData.getAll(field) as File[]
-        for (let i = 0; i < files.length; i++) {
-          const f = files[i]
-          if (!f || f.size === 0) continue
-          const prefix = getDocPrefix(field)
-          const suffix = files.length > 1 ? `_${i + 1}` : ''
+        const files = (formData.getAll(field) as File[]).filter(f => f && f.size > 0)
+        if (files.length === 0) continue
+        const prefix = getDocPrefix(field)
+        if (files.length === 1) {
+          const f = files[0]
           let buf: Buffer = Buffer.from(await f.arrayBuffer())
           let mimeType = f.type || 'application/pdf'
-          if (mimeType.startsWith('image/')) {
-            buf = await convertImageToPdf(buf, mimeType)
-            mimeType = 'application/pdf'
-          }
-          await uploadFile(folderId, `${prefix}_${firstName}${suffix}`, buf, mimeType)
+          if (mimeType.startsWith('image/')) { buf = await convertImageToPdf(buf, mimeType); mimeType = 'application/pdf' }
+          await uploadFile(folderId, `${prefix}_${firstName}`, buf, mimeType)
+        } else {
+          const fileData = await Promise.all(files.map(async f => ({ buffer: Buffer.from(await f.arrayBuffer()), mimeType: f.type || 'application/pdf' })))
+          const merged = await mergeFilesToPdf(fileData)
+          await uploadFile(folderId, `${prefix}_${firstName}`, merged, 'application/pdf')
         }
       }
 
@@ -130,27 +130,31 @@ export async function POST(request: NextRequest) {
       await uploadFile(folderId, `DNI_${firstName}`, pdfBuf, 'application/pdf')
     }
 
-    // Helper: upload a file, converting images to PDF, saving without extension
-    const uploadDoc = async (field: string, f: File, suffix: string) => {
-      let buf: Buffer = Buffer.from(await f.arrayBuffer())
-      let mimeType = f.type || 'application/pdf'
-      if (mimeType.startsWith('image/')) {
-        buf = await convertImageToPdf(buf, mimeType)
-        mimeType = 'application/pdf'
-      }
-      const prefix = getDocPrefix(field)
-      await uploadFile(folderId, `${prefix}_${firstName}${suffix}`, buf, mimeType)
-    }
-
-    // Other documents
+    // Other documents — multiple files merged into a single PDF
     for (const field of ['nominas', 'renta', 'vidaLaboral', 'contrato', 'notaSimple', 'arras',
       'bancarios', 'p7', 'vidaLaboralGib', 'recibosAutonomo', 'recibosSS', 'mod131', 'mod303', 'mod390', 'extra1', 'extra2', 'extra3']) {
-      const files = formData.getAll(field) as File[]
-      for (let i = 0; i < files.length; i++) {
-        const f = files[i]
-        if (!f || f.size === 0) continue
-        const suffix = files.length > 1 ? `_${i + 1}` : ''
-        await uploadDoc(field, f, suffix)
+      const files = (formData.getAll(field) as File[]).filter(f => f && f.size > 0)
+      if (files.length === 0) continue
+      const prefix = getDocPrefix(field)
+
+      if (files.length === 1) {
+        // Single file — convert image to PDF if needed
+        const f = files[0]
+        let buf: Buffer = Buffer.from(await f.arrayBuffer())
+        let mimeType = f.type || 'application/pdf'
+        if (mimeType.startsWith('image/')) {
+          buf = await convertImageToPdf(buf, mimeType)
+          mimeType = 'application/pdf'
+        }
+        await uploadFile(folderId, `${prefix}_${firstName}`, buf, mimeType)
+      } else {
+        // Multiple files — merge all into one PDF
+        const fileData = await Promise.all(files.map(async f => ({
+          buffer: Buffer.from(await f.arrayBuffer()),
+          mimeType: f.type || 'application/pdf',
+        })))
+        const merged = await mergeFilesToPdf(fileData)
+        await uploadFile(folderId, `${prefix}_${firstName}`, merged, 'application/pdf')
       }
     }
 

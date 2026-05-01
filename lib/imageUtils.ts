@@ -4,6 +4,7 @@ import { PDFDocument } from 'pdf-lib'
 async function trimImage(buffer: Buffer): Promise<Buffer> {
   try {
     return await sharp(buffer)
+      .rotate()                                    // respeta orientación EXIF del móvil
       .trim({ background: '#ffffff', threshold: 15 })
       .jpeg({ quality: 92 })
       .toBuffer()
@@ -72,4 +73,23 @@ export async function convertImageToPdf(buffer: Buffer, mimeType: string): Promi
   if (mimeType === 'application/pdf') return buffer
   const trimmed = await trimImage(buffer)
   return imageToPdf(trimmed)
+}
+
+/** Merges multiple files (PDFs or images) into a single PDF */
+export async function mergeFilesToPdf(files: Array<{ buffer: Buffer; mimeType: string }>): Promise<Buffer> {
+  const merged = await PDFDocument.create()
+  for (const file of files) {
+    let pdfBuf: Buffer
+    if (file.mimeType === 'application/pdf') {
+      pdfBuf = file.buffer
+    } else {
+      pdfBuf = await convertImageToPdf(file.buffer, file.mimeType)
+    }
+    try {
+      const src = await PDFDocument.load(pdfBuf)
+      const pages = await merged.copyPages(src, src.getPageIndices())
+      pages.forEach(p => merged.addPage(p))
+    } catch { /* skip unreadable pages */ }
+  }
+  return Buffer.from(await merged.save())
 }
