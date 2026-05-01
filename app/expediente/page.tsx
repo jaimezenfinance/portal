@@ -104,6 +104,16 @@ export default function ExpedientePage() {
   const handleUpload = async () => {
     const hasFiles = Object.values(docs).some(arr => arr.length > 0)
     if (!hasFiles) { setError('Sube al menos un documento'); return }
+
+    // Check file sizes before uploading (4 MB max per PDF file)
+    const MAX_PDF_MB = 4
+    const allFiles = Object.values(docs).flat()
+    const tooBig = allFiles.find(f => f.type === 'application/pdf' && f.size > MAX_PDF_MB * 1024 * 1024)
+    if (tooBig) {
+      setError(`"${tooBig.name}" es demasiado grande (${(tooBig.size / 1024 / 1024).toFixed(1)} MB). Máximo ${MAX_PDF_MB} MB por archivo PDF.`)
+      return
+    }
+
     setError(null)
     setPhase('processing')
 

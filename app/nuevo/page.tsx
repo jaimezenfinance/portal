@@ -208,6 +208,16 @@ export default function NuevoPage() {
   const handleSubmit = async () => {
     const err = validateStep3()
     if (err) { setError(err); return }
+
+    // Check file sizes before uploading (4 MB max per PDF file)
+    const MAX_PDF_MB = 4
+    const allFiles = Object.entries(docs).flatMap(([, files]) => files)
+    const tooBig = allFiles.find(f => f.type === 'application/pdf' && f.size > MAX_PDF_MB * 1024 * 1024)
+    if (tooBig) {
+      setError(`"${tooBig.name}" es demasiado grande (${(tooBig.size / 1024 / 1024).toFixed(1)} MB). Máximo ${MAX_PDF_MB} MB por archivo PDF.`)
+      return
+    }
+
     setError(null)
     setStep(4) // Processing screen
 

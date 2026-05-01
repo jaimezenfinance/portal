@@ -3,12 +3,10 @@ import { PDFDocument } from 'pdf-lib'
 
 async function trimImage(buffer: Buffer): Promise<Buffer> {
   try {
-    // First pass: trim using the corner color (removes desk/table background)
-    const trimmed = await sharp(buffer)
-      .trim({ threshold: 40 })
+    return await sharp(buffer)
+      .trim({ background: '#ffffff', threshold: 15 })
       .jpeg({ quality: 92 })
       .toBuffer()
-    return trimmed
   } catch {
     return buffer
   }
