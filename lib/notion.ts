@@ -69,7 +69,6 @@ export async function createClientEntry(data: {
     properties['DNI #2'] = { rich_text: [{ text: { content: data.titular2.dni } }] }
     properties['Email #2'] = { email: data.titular2.email }
     properties['Teléfono #2'] = { phone_number: data.titular2.telefono }
-    properties['Titular 2'] = { rich_text: [{ text: { content: `${data.titular2.nombre} · ${data.titular2.dni}` } }] }
   }
   // Create the page
   const page = await notion.pages.create({
