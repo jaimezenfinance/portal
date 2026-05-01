@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
           if (!f || f.size === 0) continue
           const prefix = getDocPrefix(field)
           const suffix = files.length > 1 ? `_${i + 1}` : ''
-          let buf = Buffer.from(await f.arrayBuffer() as ArrayBuffer)
+          let buf: Buffer = Buffer.from(await f.arrayBuffer())
           let mimeType = f.type || 'application/pdf'
           if (mimeType.startsWith('image/')) {
             buf = await convertImageToPdf(buf, mimeType)
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
 
     // Helper: upload a file, converting images to PDF, saving without extension
     const uploadDoc = async (field: string, f: File, suffix: string) => {
-      let buf = Buffer.from(await f.arrayBuffer() as ArrayBuffer)
+      let buf: Buffer = Buffer.from(await f.arrayBuffer())
       let mimeType = f.type || 'application/pdf'
       if (mimeType.startsWith('image/')) {
         buf = await convertImageToPdf(buf, mimeType)
