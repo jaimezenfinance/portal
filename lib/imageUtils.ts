@@ -69,7 +69,7 @@ export async function singleDniToPdf(buffer: Buffer): Promise<Buffer> {
 }
 
 /** Converts any image (jpg, png, etc.) to PDF. Returns the buffer unchanged if it's already a PDF. */
-export async function convertImageToPdf(buffer: Buffer, mimeType: string): Promise<Buffer> {
+export async function convertImageToPdf(buffer: Buffer<ArrayBuffer>, mimeType: string): Promise<Buffer<ArrayBuffer>> {
   if (mimeType === 'application/pdf') return buffer
   const trimmed = await trimImage(buffer)
   return imageToPdf(trimmed)
