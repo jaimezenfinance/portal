@@ -3,7 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import { createFolder, uploadFile } from '@/lib/drive'
 import { createClientEntry } from '@/lib/notion'
-import { combineDniImages, singleDniToPdf } from '@/lib/imageUtils'
+import { combineDniImages, singleDniToPdf, convertImageToPdf } from '@/lib/imageUtils'
 
 export const maxDuration = 60
 
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         const frontBuf = Buffer.from(await dniFrontFile.arrayBuffer())
         const backBuf = Buffer.from(await dniBackFile.arrayBuffer())
         const combined = await combineDniImages(frontBuf, backBuf)
-        await uploadFile(folderId, `DNI_${firstName}.pdf`, combined, 'application/pdf')
+        await uploadFile(folderId, `DNI_${firstName}`, combined, 'application/pdf')
       } else if (dniFrontFile) {
         const buf = Buffer.from(await dniFrontFile.arrayBuffer())
         const pdfBuf = await singleDniToPdf(buf)
@@ -72,11 +72,15 @@ export async function POST(request: NextRequest) {
         for (let i = 0; i < files.length; i++) {
           const f = files[i]
           if (!f || f.size === 0) continue
-          const ext = f.name.split('.').pop() || 'pdf'
           const prefix = getDocPrefix(field)
           const suffix = files.length > 1 ? `_${i + 1}` : ''
-          const buf = Buffer.from(await f.arrayBuffer())
-          await uploadFile(folderId, `${prefix}_${firstName}${suffix}.${ext}`, buf, f.type || 'application/pdf')
+          let buf = Buffer.from(await f.arrayBuffer())
+          let mimeType = f.type || 'application/pdf'
+          if (mimeType.startsWith('image/')) {
+            buf = await convertImageToPdf(buf, mimeType)
+            mimeType = 'application/pdf'
+          }
+          await uploadFile(folderId, `${prefix}_${firstName}${suffix}`, buf, mimeType)
         }
       }
 
@@ -109,7 +113,7 @@ export async function POST(request: NextRequest) {
       const backBuf = Buffer.from(await dniBackFile.arrayBuffer())
       try {
         const combined = await combineDniImages(frontBuf, backBuf)
-        await uploadFile(folderId, `DNI_${firstName}.pdf`, combined, 'application/pdf')
+        await uploadFile(folderId, `DNI_${firstName}`, combined, 'application/pdf')
       } catch {
         // Fallback: upload front as PDF separately if combine fails
         const frontBuf2 = Buffer.from(await dniFrontFile.arrayBuffer())
@@ -122,35 +126,30 @@ export async function POST(request: NextRequest) {
     } else if (dniFrontFile) {
       const buf = Buffer.from(await dniFrontFile.arrayBuffer())
       const pdfBuf = await singleDniToPdf(buf)
-      await uploadFile(folderId, `DNI_${firstName}.pdf`, pdfBuf, 'application/pdf')
+      await uploadFile(folderId, `DNI_${firstName}`, pdfBuf, 'application/pdf')
+    }
+
+    // Helper: upload a file, converting images to PDF, saving without extension
+    const uploadDoc = async (field: string, f: File, suffix: string) => {
+      let buf = Buffer.from(await f.arrayBuffer())
+      let mimeType = f.type || 'application/pdf'
+      if (mimeType.startsWith('image/')) {
+        buf = await convertImageToPdf(buf, mimeType)
+        mimeType = 'application/pdf'
+      }
+      const prefix = getDocPrefix(field)
+      await uploadFile(folderId, `${prefix}_${firstName}${suffix}`, buf, mimeType)
     }
 
     // Other documents
-    for (const field of ['nominas', 'renta', 'vidaLaboral', 'contrato', 'notaSimple', 'arras']) {
+    for (const field of ['nominas', 'renta', 'vidaLaboral', 'contrato', 'notaSimple', 'arras',
+      'bancarios', 'p7', 'vidaLaboralGib', 'recibosAutonomo', 'recibosSS', 'mod131', 'mod303', 'mod390', 'extra1', 'extra2', 'extra3']) {
       const files = formData.getAll(field) as File[]
       for (let i = 0; i < files.length; i++) {
         const f = files[i]
         if (!f || f.size === 0) continue
-        const ext = f.name.split('.').pop() || 'pdf'
-        const prefix = getDocPrefix(field)
         const suffix = files.length > 1 ? `_${i + 1}` : ''
-        const buf = Buffer.from(await f.arrayBuffer())
-        await uploadFile(folderId, `${prefix}_${firstName}${suffix}.${ext}`, buf, f.type || 'application/pdf')
-      }
-    }
-
-    // Extra fields
-    const extraFields = ['bancarios', 'p7', 'vidaLaboralGib', 'recibosAutonomo', 'recibosSS', 'mod131', 'mod303', 'mod390', 'extra1', 'extra2', 'extra3']
-    for (const field of extraFields) {
-      const files = formData.getAll(field) as File[]
-      for (let i = 0; i < files.length; i++) {
-        const f = files[i]
-        if (!f || f.size === 0) continue
-        const ext = f.name.split('.').pop() || 'pdf'
-        const prefix = getDocPrefix(field)
-        const suffix = files.length > 1 ? `_${i + 1}` : ''
-        const buf = Buffer.from(await f.arrayBuffer())
-        await uploadFile(folderId, `${prefix}_${firstName}${suffix}.${ext}`, buf, f.type || 'application/pdf')
+        await uploadDoc(field, f, suffix)
       }
     }
 
@@ -175,6 +174,8 @@ export async function POST(request: NextRequest) {
 
     // Create Notion entry
     const precioCompra = inmueble.precioCompra ? parseFloat(inmueble.precioCompra) : undefined
+    const arras = inmueble.entradaArras ? parseFloat(inmueble.entradaArras) : undefined
+    const t2 = titulares[1]
     await createClientEntry({
       name: `${titular1.nombre} ${titular1.apellido1}`,
       dni: titular1.dni,
@@ -183,6 +184,9 @@ export async function POST(request: NextRequest) {
       area: inmueble.area,
       direccion: calleStr,
       precioCompra,
+      arras,
+      titular1: { nombre: `${titular1.nombre} ${titular1.apellido1}`, dni: titular1.dni, email: titular1.email },
+      titular2: t2 ? { nombre: `${t2.nombre} ${t2.apellido1}`, dni: t2.dni, email: t2.email } : undefined,
     })
 
     return NextResponse.json({ ok: true, folderId })

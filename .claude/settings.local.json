@@ -3,7 +3,8 @@
     "allow": [
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "mcp__2de7fef3-51c7-4e0f-a745-e2c09c05e133__notion-update-data-source"
     ]
   }
 }

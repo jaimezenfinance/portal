@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react'
 import Header from '@/components/Header'
 import FileUploadSlot from '@/components/FileUploadSlot'
 import Mascot from '@/components/Mascot'
+import { compressImageFile } from '@/lib/compressImage'
 
 interface Docs {
   dniFront: File[]
@@ -113,22 +114,26 @@ export default function ExpedientePage() {
       formData.append('dni', dni.toUpperCase())
       formData.append('mode', 'returning')
 
-      if (docs.dniFront[0]) formData.append('dniFront', docs.dniFront[0])
-      if (docs.dniBack[0]) formData.append('dniBack', docs.dniBack[0])
-      docs.nominas.forEach(f => formData.append('nominas', f))
-      if (docs.renta[0]) formData.append('renta', docs.renta[0])
-      if (docs.vidaLaboral[0]) formData.append('vidaLaboral', docs.vidaLaboral[0])
-      if (docs.contrato[0]) formData.append('contrato', docs.contrato[0])
-      if (docs.notaSimple[0]) formData.append('notaSimple', docs.notaSimple[0])
-      if (docs.arras[0]) formData.append('arras', docs.arras[0])
-      if (docs.extra1[0]) formData.append('extra1', docs.extra1[0])
-      if (docs.extra2[0]) formData.append('extra2', docs.extra2[0])
-      if (docs.extra3[0]) formData.append('extra3', docs.extra3[0])
+      const c = compressImageFile
+      if (docs.dniFront[0]) formData.append('dniFront', await c(docs.dniFront[0]))
+      if (docs.dniBack[0]) formData.append('dniBack', await c(docs.dniBack[0]))
+      for (const f of docs.nominas) formData.append('nominas', await c(f))
+      if (docs.renta[0]) formData.append('renta', await c(docs.renta[0]))
+      if (docs.vidaLaboral[0]) formData.append('vidaLaboral', await c(docs.vidaLaboral[0]))
+      if (docs.contrato[0]) formData.append('contrato', await c(docs.contrato[0]))
+      if (docs.notaSimple[0]) formData.append('notaSimple', await c(docs.notaSimple[0]))
+      if (docs.arras[0]) formData.append('arras', await c(docs.arras[0]))
+      if (docs.extra1[0]) formData.append('extra1', await c(docs.extra1[0]))
+      if (docs.extra2[0]) formData.append('extra2', await c(docs.extra2[0]))
+      if (docs.extra3[0]) formData.append('extra3', await c(docs.extra3[0]))
 
       const res = await fetch('/api/upload', { method: 'POST', body: formData })
       if (!res.ok) {
-        const d = await res.json()
-        throw new Error(d.error || 'Error al subir documentos')
+        if (res.status === 413) throw new Error('Los archivos son demasiado grandes. Intenta subir documentos más pequeños.')
+        const text = await res.text()
+        let msg = 'Error al subir documentos'
+        try { msg = JSON.parse(text).error || msg } catch {}
+        throw new Error(msg)
       }
       setTimeout(() => setPhase('done'), 800)
     } catch (e: any) {

@@ -4,6 +4,7 @@ import Header from '@/components/Header'
 import Stepper from '@/components/Stepper'
 import FileUploadSlot from '@/components/FileUploadSlot'
 import Mascot from '@/components/Mascot'
+import { compressImageFile, compressFiles } from '@/lib/compressImage'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -22,6 +23,7 @@ interface Inmueble {
   calle: string
   area: string
   precioCompra: string
+  entradaArras: string
 }
 
 interface Docs {
@@ -129,7 +131,7 @@ export default function NuevoPage() {
   const [compraConPareja, setCompraConPareja] = useState(false)
   const [tipoTrabajador, setTipoTrabajador] = useState<TipoTrabajador>('espana')
   const [titulares, setTitulares] = useState<Titular[]>([emptyTitular()])
-  const [inmueble, setInmueble] = useState<Inmueble>({ tipoVia: 'C/', calle: '', area: '', precioCompra: '' })
+  const [inmueble, setInmueble] = useState<Inmueble>({ tipoVia: 'C/', calle: '', area: '', precioCompra: '', entradaArras: '' })
   const [docs, setDocs] = useState<Docs>(emptyDocs())
   const [error, setError] = useState<string | null>(null)
   const [clienteDni, setClienteDni] = useState('')
@@ -211,37 +213,41 @@ export default function NuevoPage() {
 
     try {
       const formData = new FormData()
-      // Titulares
       formData.append('titulares', JSON.stringify(titulares))
-      // Inmueble
       formData.append('inmueble', JSON.stringify(inmueble))
-      // Files
-      if (docs.dniFront[0]) formData.append('dniFront', docs.dniFront[0])
-      if (docs.dniBack[0]) formData.append('dniBack', docs.dniBack[0])
-      docs.nominas.forEach(f => formData.append('nominas', f))
-      if (docs.renta[0]) formData.append('renta', docs.renta[0])
-      if (docs.vidaLaboral[0]) formData.append('vidaLaboral', docs.vidaLaboral[0])
-      if (docs.contrato[0]) formData.append('contrato', docs.contrato[0])
-      if (docs.notaSimple[0]) formData.append('notaSimple', docs.notaSimple[0])
-      if (docs.arras[0]) formData.append('arras', docs.arras[0])
-      docs.bancarios.forEach(f => formData.append('bancarios', f))
-      if (docs.p7[0]) formData.append('p7', docs.p7[0])
-      if (docs.vidaLaboralGib[0]) formData.append('vidaLaboralGib', docs.vidaLaboralGib[0])
-      docs.recibosAutonomo.forEach(f => formData.append('recibosAutonomo', f))
-      docs.recibosSS.forEach(f => formData.append('recibosSS', f))
-      docs.mod131.forEach(f => formData.append('mod131', f))
-      docs.mod303.forEach(f => formData.append('mod303', f))
-      if (docs.mod390[0]) formData.append('mod390', docs.mod390[0])
-      if (docs.extra1[0]) formData.append('extra1', docs.extra1[0])
-      if (docs.extra2[0]) formData.append('extra2', docs.extra2[0])
-      if (docs.extra3[0]) formData.append('extra3', docs.extra3[0])
       formData.append('tipoTrabajador', tipoTrabajador)
+
+      // Compress images before appending
+      const c = compressImageFile
+      const cs = compressFiles
+      if (docs.dniFront[0]) formData.append('dniFront', await c(docs.dniFront[0]))
+      if (docs.dniBack[0]) formData.append('dniBack', await c(docs.dniBack[0]))
+      for (const f of await cs(docs.nominas)) formData.append('nominas', f)
+      if (docs.renta[0]) formData.append('renta', await c(docs.renta[0]))
+      if (docs.vidaLaboral[0]) formData.append('vidaLaboral', await c(docs.vidaLaboral[0]))
+      if (docs.contrato[0]) formData.append('contrato', await c(docs.contrato[0]))
+      if (docs.notaSimple[0]) formData.append('notaSimple', await c(docs.notaSimple[0]))
+      if (docs.arras[0]) formData.append('arras', await c(docs.arras[0]))
+      for (const f of await cs(docs.bancarios)) formData.append('bancarios', f)
+      if (docs.p7[0]) formData.append('p7', await c(docs.p7[0]))
+      if (docs.vidaLaboralGib[0]) formData.append('vidaLaboralGib', await c(docs.vidaLaboralGib[0]))
+      for (const f of await cs(docs.recibosAutonomo)) formData.append('recibosAutonomo', f)
+      for (const f of await cs(docs.recibosSS)) formData.append('recibosSS', f)
+      for (const f of await cs(docs.mod131)) formData.append('mod131', f)
+      for (const f of await cs(docs.mod303)) formData.append('mod303', f)
+      if (docs.mod390[0]) formData.append('mod390', await c(docs.mod390[0]))
+      if (docs.extra1[0]) formData.append('extra1', await c(docs.extra1[0]))
+      if (docs.extra2[0]) formData.append('extra2', await c(docs.extra2[0]))
+      if (docs.extra3[0]) formData.append('extra3', await c(docs.extra3[0]))
 
       const res = await fetch('/api/upload', { method: 'POST', body: formData })
 
       if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Error al procesar la solicitud')
+        if (res.status === 413) throw new Error('Los archivos son demasiado grandes. Intenta subir documentos más pequeños.')
+        const text = await res.text()
+        let msg = 'Error al procesar la solicitud'
+        try { msg = JSON.parse(text).error || msg } catch {}
+        throw new Error(msg)
       }
 
       const result = await res.json()
@@ -370,6 +376,17 @@ export default function NuevoPage() {
                 value={inmueble.precioCompra}
                 onChange={e => handleInmuebleChange('precioCompra', e.target.value)}
                 placeholder="150000"
+                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Entrada / Arras (€)</label>
+              <input
+                type="number"
+                value={inmueble.entradaArras}
+                onChange={e => handleInmuebleChange('entradaArras', e.target.value)}
+                placeholder="10000"
                 className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300"
               />
             </div>
