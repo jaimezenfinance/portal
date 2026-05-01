@@ -25,7 +25,7 @@ export default function Home() {
             <div className="bg-white rounded-2xl shadow-md p-6 flex items-center gap-4 hover:shadow-lg hover:border-[#ffbeb8] border-2 border-transparent transition-all cursor-pointer">
               <div className="w-12 h-12 bg-[#ffbeb8] rounded-xl flex items-center justify-center text-2xl">🔁</div>
               <div>
-                <h2 className="font-semibold text-gray-800 text-lg">Ya tengo expediente</h2>
+                <h2 className="font-semibold text-[#0f3693] text-lg">Ya tengo expediente</h2>
                 <p className="text-gray-500 text-sm">Ya soy cliente y quiero añadir documentos</p>
               </div>
             </div>
