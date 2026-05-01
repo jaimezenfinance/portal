@@ -186,8 +186,8 @@ export async function POST(request: NextRequest) {
       direccion: calleStr,
       precioCompra,
       arras,
-      titular1: { nombre: `${titular1.nombre} ${titular1.apellido1}`, dni: titular1.dni, email: titular1.email },
-      titular2: t2 ? { nombre: `${t2.nombre} ${t2.apellido1}`, dni: t2.dni, email: t2.email } : undefined,
+      titular1: { nombre: `${titular1.nombre} ${titular1.apellido1}`, dni: titular1.dni, email: titular1.email, telefono: titular1.telefono },
+      titular2: t2 ? { nombre: `${t2.nombre} ${t2.apellido1}`, dni: t2.dni, email: t2.email, telefono: t2.telefono } : undefined,
     })
 
     return NextResponse.json({ ok: true, folderId })

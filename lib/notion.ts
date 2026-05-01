@@ -21,8 +21,8 @@ export async function createClientEntry(data: {
   direccion?: string
   precioCompra?: number
   arras?: number
-  titular1?: { nombre: string; dni: string; email: string }
-  titular2?: { nombre: string; dni: string; email: string }
+  titular1?: { nombre: string; dni: string; email: string; telefono: string }
+  titular2?: { nombre: string; dni: string; email: string; telefono: string }
 }): Promise<void> {
   const databaseId = process.env.NOTION_DATABASE_ID!
   const notion = getNotion()
@@ -62,17 +62,35 @@ export async function createClientEntry(data: {
     properties['Nombre #1'] = { rich_text: [{ text: { content: data.titular1.nombre } }] }
     properties['DNI #1'] = { rich_text: [{ text: { content: data.titular1.dni } }] }
     properties['Email #1'] = { email: data.titular1.email }
+    properties['Teléfono #1'] = { phone_number: data.titular1.telefono }
   }
   if (data.titular2) {
     properties['Nombre #2'] = { rich_text: [{ text: { content: data.titular2.nombre } }] }
     properties['DNI #2'] = { rich_text: [{ text: { content: data.titular2.dni } }] }
     properties['Email #2'] = { email: data.titular2.email }
+    properties['Teléfono #2'] = { phone_number: data.titular2.telefono }
     properties['Titular 2'] = { rich_text: [{ text: { content: `${data.titular2.nombre} · ${data.titular2.dni}` } }] }
   }
-  await notion.pages.create({
+  // Create the page
+  const page = await notion.pages.create({
     parent: { database_id: databaseId },
     properties,
   })
+
+  // Copy template blocks (tabs + Diario Bancos views) into the new page
+  const TEMPLATE_ID = '28c2a113-edca-8136-be6e-db1aa50621ee'
+  try {
+    const templateBlocks = await notion.blocks.children.list({ block_id: TEMPLATE_ID })
+    const copyable = templateBlocks.results.filter((b: any) => b.type !== 'unsupported')
+    if (copyable.length > 0) {
+      await notion.blocks.children.append({
+        block_id: page.id,
+        children: copyable as any[],
+      })
+    }
+  } catch {
+    // Non-critical — page is created even if template blocks can't be copied
+  }
 }
 
 export async function findClientByDni(dni: string): Promise<{ name: string; folderId?: string } | null> {
