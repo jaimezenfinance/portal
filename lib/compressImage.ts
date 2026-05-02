@@ -2,7 +2,7 @@
  * Compresses an image file using the Canvas API before upload.
  * Returns the original file unchanged if it's a PDF or already small enough.
  */
-export async function compressImageFile(file: File, maxSizeMB = 1): Promise<File> {
+export async function compressImageFile(file: File, maxSizeMB = 0.5): Promise<File> {
   // Don't compress PDFs or non-images
   if (file.type === 'application/pdf' || !file.type.startsWith('image/')) {
     return file
@@ -48,7 +48,11 @@ export async function compressImageFile(file: File, maxSizeMB = 1): Promise<File
   })
 }
 
-/** Compress an array of files */
-export async function compressFiles(files: File[], maxSizeMB = 1): Promise<File[]> {
-  return Promise.all(files.map(f => compressImageFile(f, maxSizeMB)))
+/** Compress an array of files sequentially to avoid browser memory exhaustion */
+export async function compressFiles(files: File[], maxSizeMB = 0.5): Promise<File[]> {
+  const results: File[] = []
+  for (const f of files) {
+    results.push(await compressImageFile(f, maxSizeMB))
+  }
+  return results
 }
