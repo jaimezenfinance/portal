@@ -6,8 +6,7 @@ import Mascot from '@/components/Mascot'
 import { compressImageFile } from '@/lib/compressImage'
 
 interface Docs {
-  dniFront: File[]
-  dniBack: File[]
+  dni: File[]
   nominas: File[]
   renta: File[]
   vidaLaboral: File[]
@@ -20,15 +19,14 @@ interface Docs {
 }
 
 const emptyDocs = (): Docs => ({
-  dniFront: [], dniBack: [], nominas: [], renta: [],
+  dni: [], nominas: [], renta: [],
   vidaLaboral: [], contrato: [], notaSimple: [], arras: [],
   extra1: [], extra2: [], extra3: [],
 })
 
 // Maps each doc slot to the file prefix used when uploading
 const DOC_PREFIXES: Record<keyof Docs, string> = {
-  dniFront: 'DNI_',
-  dniBack: 'DNI_',
+  dni: 'DNI_',
   nominas: 'NOMINA_',
   renta: 'RENTA_',
   vidaLaboral: 'VIDALABORAL_',
@@ -125,8 +123,8 @@ export default function ExpedientePage() {
       formData.append('mode', 'returning')
 
       const c = compressImageFile
-      if (docs.dniFront[0]) formData.append('dniFront', await c(docs.dniFront[0]))
-      if (docs.dniBack[0]) formData.append('dniBack', await c(docs.dniBack[0]))
+      if (docs.dni[0]) formData.append('dniFront', await c(docs.dni[0]))
+      if (docs.dni[1]) formData.append('dniBack', await c(docs.dni[1]))
       for (const f of docs.nominas) formData.append('nominas', await c(f))
       if (docs.renta[0]) formData.append('renta', await c(docs.renta[0]))
       if (docs.vidaLaboral[0]) formData.append('vidaLaboral', await c(docs.vidaLaboral[0]))
@@ -233,8 +231,7 @@ export default function ExpedientePage() {
             </div>
           )}
 
-          {slot('dniFront', 'DNI/NIE (parte delantera)')}
-          {slot('dniBack', 'DNI/NIE (parte trasera)')}
+          {slot('dni', 'DNI/NIE (parte delantera y trasera)', { multiple: true })}
           {slot('nominas', 'Últimas 3 nóminas', { multiple: true })}
           {slot('renta', 'Declaración de la renta')}
           {slot('vidaLaboral', 'Vida laboral')}

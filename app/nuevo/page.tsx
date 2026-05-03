@@ -27,8 +27,7 @@ interface Inmueble {
 }
 
 interface Docs {
-  dniFront: File[]
-  dniBack: File[]
+  dni: File[]
   nominas: File[]
   renta: File[]
   vidaLaboral: File[]
@@ -53,7 +52,7 @@ const emptyTitular = (): Titular => ({
 })
 
 const emptyDocs = (): Docs => ({
-  dniFront: [], dniBack: [], nominas: [], renta: [],
+  dni: [], nominas: [], renta: [],
   vidaLaboral: [], vidaLaboralGib: [], p7: [],
   recibosAutonomo: [], recibosSS: [], mod131: [], mod303: [], mod390: [],
   contrato: [], bancarios: [], notaSimple: [], arras: [],
@@ -181,7 +180,7 @@ export default function NuevoPage() {
   }
 
   const validateStep3 = () => {
-    if (docs.dniFront.length === 0) return 'El DNI/NIE (parte delantera) es obligatorio.'
+    if (docs.dni.length === 0) return 'El DNI/NIE es obligatorio.'
     return null
   }
 
@@ -230,8 +229,8 @@ export default function NuevoPage() {
       // Compress images before appending
       const c = compressImageFile
       const cs = compressFiles
-      if (docs.dniFront[0]) formData.append('dniFront', await c(docs.dniFront[0]))
-      if (docs.dniBack[0]) formData.append('dniBack', await c(docs.dniBack[0]))
+      if (docs.dni[0]) formData.append('dniFront', await c(docs.dni[0]))
+      if (docs.dni[1]) formData.append('dniBack', await c(docs.dni[1]))
       for (const f of await cs(docs.nominas)) formData.append('nominas', f)
       if (docs.renta[0]) formData.append('renta', await c(docs.renta[0]))
       if (docs.vidaLaboral[0]) formData.append('vidaLaboral', await c(docs.vidaLaboral[0]))
@@ -457,8 +456,7 @@ export default function NuevoPage() {
             </p>
 
             {/* Always shown */}
-            <FileUploadSlot label="DNI/NIE (parte delantera)" fieldName="dniFront" required files={docs.dniFront} onFiles={handleDocFiles('dniFront')} />
-            <FileUploadSlot label="DNI/NIE (parte trasera)" fieldName="dniBack" files={docs.dniBack} onFiles={handleDocFiles('dniBack')} />
+            <FileUploadSlot label="DNI/NIE (parte delantera y trasera)" fieldName="dni" required multiple files={docs.dni} onFiles={handleDocFiles('dni')} />
             <FileUploadSlot label="Últimas 3 nóminas" fieldName="nominas" multiple files={docs.nominas} onFiles={handleDocFiles('nominas')} />
             <FileUploadSlot label="Declaración de la renta" fieldName="renta" files={docs.renta} onFiles={handleDocFiles('renta')} />
 
