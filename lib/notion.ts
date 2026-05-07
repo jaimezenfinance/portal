@@ -21,8 +21,8 @@ export async function createClientEntry(data: {
   direccion?: string
   precioCompra?: number
   arras?: number
-  titular1?: { nombre: string; dni: string; email: string; telefono: string }
-  titular2?: { nombre: string; dni: string; email: string; telefono: string }
+  titular1?: { nombre: string; dni: string; email: string; telefono: string; edad?: number }
+  titular2?: { nombre: string; dni: string; email: string; telefono: string; edad?: number }
 }): Promise<void> {
   const databaseId = process.env.NOTION_DATABASE_ID!
   const notion = getNotion()
@@ -63,12 +63,14 @@ export async function createClientEntry(data: {
     properties['DNI #1'] = { rich_text: [{ text: { content: data.titular1.dni } }] }
     properties['Email #1'] = { email: data.titular1.email }
     properties['Teléfono #1'] = { phone_number: data.titular1.telefono }
+    if (data.titular1.edad !== undefined) properties['Edad #1'] = { number: data.titular1.edad }
   }
   if (data.titular2) {
     properties['Nombre #2'] = { rich_text: [{ text: { content: data.titular2.nombre } }] }
     properties['DNI #2'] = { rich_text: [{ text: { content: data.titular2.dni } }] }
     properties['Email #2'] = { email: data.titular2.email }
     properties['Teléfono #2'] = { phone_number: data.titular2.telefono }
+    if (data.titular2.edad !== undefined) properties['Edad #2'] = { number: data.titular2.edad }
   }
   // Create the page
   const page = await notion.pages.create({

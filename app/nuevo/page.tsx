@@ -16,6 +16,7 @@ interface Titular {
   dni: string
   telefono: string
   email: string
+  edad: string
 }
 
 interface Inmueble {
@@ -48,7 +49,7 @@ interface Docs {
 }
 
 const emptyTitular = (): Titular => ({
-  nombre: '', apellido1: '', dni: '', telefono: '', email: ''
+  nombre: '', apellido1: '', dni: '', telefono: '', email: '', edad: ''
 })
 
 const emptyDocs = (): Docs => ({
@@ -116,6 +117,18 @@ function TitularForm({ index, data, onChange }: TitularFormProps) {
             onChange={e => onChange(index, 'email', e.target.value.toLowerCase())}
             className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300"
             placeholder="correo@ejemplo.com"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Edad</label>
+          <input
+            type="number"
+            min="18"
+            max="99"
+            value={data.edad}
+            onChange={e => onChange(index, 'edad', e.target.value)}
+            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300"
+            placeholder="Ej: 35"
           />
         </div>
       </div>
@@ -457,7 +470,9 @@ export default function NuevoPage() {
 
             {/* Always shown */}
             <FileUploadSlot label="DNI/NIE (parte delantera y trasera)" fieldName="dni" required multiple files={docs.dni} onFiles={handleDocFiles('dni')} />
-            <FileUploadSlot label="Últimas 3 nóminas" fieldName="nominas" multiple files={docs.nominas} onFiles={handleDocFiles('nominas')} />
+            {tipoTrabajador !== 'autonomo' && (
+              <FileUploadSlot label="Últimas 3 nóminas" fieldName="nominas" multiple files={docs.nominas} onFiles={handleDocFiles('nominas')} />
+            )}
             <FileUploadSlot label="Declaración de la renta" fieldName="renta" files={docs.renta} onFiles={handleDocFiles('renta')} />
 
             {/* Gibraltar only: P7 after renta */}
@@ -482,7 +497,9 @@ export default function NuevoPage() {
               <FileUploadSlot label="Vida laboral Gibraltar" fieldName="vidaLaboralGib" files={docs.vidaLaboralGib} onFiles={handleDocFiles('vidaLaboralGib')} />
             )}
 
-            <FileUploadSlot label="Contrato de trabajo" fieldName="contrato" files={docs.contrato} onFiles={handleDocFiles('contrato')} />
+            {tipoTrabajador !== 'autonomo' && (
+              <FileUploadSlot label="Contrato de trabajo" fieldName="contrato" files={docs.contrato} onFiles={handleDocFiles('contrato')} />
+            )}
             <FileUploadSlot label="3 meses movimientos banco" fieldName="bancarios" multiple files={docs.bancarios} onFiles={handleDocFiles('bancarios')} />
             <FileUploadSlot label="Nota simple del inmueble" fieldName="notaSimple" files={docs.notaSimple} onFiles={handleDocFiles('notaSimple')} />
             <FileUploadSlot label="Contrato de arras" fieldName="arras" files={docs.arras} onFiles={handleDocFiles('arras')} />
