@@ -90,6 +90,18 @@ function TitularForm({ index, data, onChange }: TitularFormProps) {
           </div>
         ))}
         <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Edad <span className="text-red-500">*</span></label>
+          <input
+            type="number"
+            min="18"
+            max="99"
+            value={data.edad}
+            onChange={e => onChange(index, 'edad', e.target.value)}
+            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300"
+            placeholder="Ej: 35"
+          />
+        </div>
+        <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">DNI/NIE <span className="text-red-500">*</span></label>
           <input
             type="text"
@@ -117,18 +129,6 @@ function TitularForm({ index, data, onChange }: TitularFormProps) {
             onChange={e => onChange(index, 'email', e.target.value.toLowerCase())}
             className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300"
             placeholder="correo@ejemplo.com"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Edad</label>
-          <input
-            type="number"
-            min="18"
-            max="99"
-            value={data.edad}
-            onChange={e => onChange(index, 'edad', e.target.value)}
-            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300"
-            placeholder="Ej: 35"
           />
         </div>
       </div>
@@ -180,7 +180,7 @@ export default function NuevoPage() {
   // ── Validation ─────────────────────────────────────────────────────────────
   const validateStep1 = () => {
     for (const t of titulares) {
-      if (!t.nombre || !t.apellido1 || !t.dni || !t.telefono || !t.email) {
+      if (!t.nombre || !t.apellido1 || !t.edad || !t.dni || !t.telefono || !t.email) {
         return 'Por favor, completa todos los campos de los titulares.'
       }
     }
