@@ -71,32 +71,37 @@ const emptyAllDocs = (): AllDocs => ({ t1: emptyTitularDocs(), t2: emptyTitularD
 
 // ─── Module-level helper: append titular docs to FormData ────────────────────
 
+/**
+ * Append one titular's docs to a FormData object.
+ * fieldPrefix: 't1_' / 't2_' for new-client calls; '' for returning-client calls.
+ */
 async function appendTitularDocs(
   formData: FormData,
-  tKey: 't1' | 't2',
+  fieldPrefix: string,
   d: TitularDocs,
 ) {
   const c = compressImageFile
   const cs = compressFiles
-  if (d.dni[0]) formData.append(`${tKey}_dniFront`, await c(d.dni[0]))
-  if (d.dni[1]) formData.append(`${tKey}_dniBack`, await c(d.dni[1]))
-  for (const f of await cs(d.nominas)) formData.append(`${tKey}_nominas`, f)
-  if (d.renta[0]) formData.append(`${tKey}_renta`, await c(d.renta[0]))
-  if (d.vidaLaboral[0]) formData.append(`${tKey}_vidaLaboral`, await c(d.vidaLaboral[0]))
-  if (d.vidaLaboralGib[0]) formData.append(`${tKey}_vidaLaboralGib`, await c(d.vidaLaboralGib[0]))
-  if (d.contrato[0]) formData.append(`${tKey}_contrato`, await c(d.contrato[0]))
-  if (d.p7[0]) formData.append(`${tKey}_p7`, await c(d.p7[0]))
-  for (const f of await cs(d.recibosAutonomo)) formData.append(`${tKey}_recibosAutonomo`, f)
-  for (const f of await cs(d.recibosSS)) formData.append(`${tKey}_recibosSS`, f)
-  for (const f of await cs(d.mod131)) formData.append(`${tKey}_mod131`, f)
-  for (const f of await cs(d.mod303)) formData.append(`${tKey}_mod303`, f)
-  if (d.mod390[0]) formData.append(`${tKey}_mod390`, await c(d.mod390[0]))
-  for (const f of await cs(d.bancarios)) formData.append(`${tKey}_bancarios`, f)
-  if (d.notaSimple[0]) formData.append(`${tKey}_notaSimple`, await c(d.notaSimple[0]))
-  if (d.arras[0]) formData.append(`${tKey}_arras`, await c(d.arras[0]))
-  if (d.extra1[0]) formData.append(`${tKey}_extra1`, await c(d.extra1[0]))
-  if (d.extra2[0]) formData.append(`${tKey}_extra2`, await c(d.extra2[0]))
-  if (d.extra3[0]) formData.append(`${tKey}_extra3`, await c(d.extra3[0]))
+  const k = (name: string) => `${fieldPrefix}${name}`
+  if (d.dni[0]) formData.append(k('dniFront'), await c(d.dni[0]))
+  if (d.dni[1]) formData.append(k('dniBack'), await c(d.dni[1]))
+  for (const f of await cs(d.nominas)) formData.append(k('nominas'), f)
+  if (d.renta[0]) formData.append(k('renta'), await c(d.renta[0]))
+  if (d.vidaLaboral[0]) formData.append(k('vidaLaboral'), await c(d.vidaLaboral[0]))
+  if (d.vidaLaboralGib[0]) formData.append(k('vidaLaboralGib'), await c(d.vidaLaboralGib[0]))
+  if (d.contrato[0]) formData.append(k('contrato'), await c(d.contrato[0]))
+  if (d.p7[0]) formData.append(k('p7'), await c(d.p7[0]))
+  for (const f of await cs(d.recibosAutonomo)) formData.append(k('recibosAutonomo'), f)
+  for (const f of await cs(d.recibosSS)) formData.append(k('recibosSS'), f)
+  for (const f of await cs(d.mod131)) formData.append(k('mod131'), f)
+  for (const f of await cs(d.mod303)) formData.append(k('mod303'), f)
+  if (d.mod390[0]) formData.append(k('mod390'), await c(d.mod390[0]))
+  for (const f of await cs(d.bancarios)) formData.append(k('bancarios'), f)
+  if (d.notaSimple[0]) formData.append(k('notaSimple'), await c(d.notaSimple[0]))
+  if (d.arras[0]) formData.append(k('arras'), await c(d.arras[0]))
+  if (d.extra1[0]) formData.append(k('extra1'), await c(d.extra1[0]))
+  if (d.extra2[0]) formData.append(k('extra2'), await c(d.extra2[0]))
+  if (d.extra3[0]) formData.append(k('extra3'), await c(d.extra3[0]))
 }
 
 // ─── TitularForm (module level — prevents remount on re-render) ──────────────
@@ -405,12 +410,23 @@ export default function NuevoPage() {
     const err = validateStep3()
     if (err) { setError(err); return }
 
-    // Check PDF file sizes
+    // Report ALL oversized PDFs at once so the user knows exactly what to fix
     const MAX_PDF_MB = 4
-    const allFiles = [...Object.values(docs.t1).flat(), ...Object.values(docs.t2).flat()]
-    const tooBig = allFiles.find(f => f.type === 'application/pdf' && f.size > MAX_PDF_MB * 1024 * 1024)
-    if (tooBig) {
-      setError(`"${tooBig.name}" es demasiado grande (${(tooBig.size / 1024 / 1024).toFixed(1)} MB). Máximo ${MAX_PDF_MB} MB por archivo PDF.`)
+    const labeledFiles: { file: File; titular: string }[] = [
+      ...Object.values(docs.t1).flat().map(f => ({ file: f, titular: titulares[0].nombre || 'Titular 1' })),
+      ...Object.values(docs.t2).flat().map(f => ({ file: f, titular: titulares[1]?.nombre || 'Titular 2' })),
+    ]
+    const tooBig = labeledFiles.filter(
+      ({ file: f }) => f.type === 'application/pdf' && f.size > MAX_PDF_MB * 1024 * 1024,
+    )
+    if (tooBig.length > 0) {
+      const lines = tooBig.map(
+        ({ file: f, titular }) =>
+          `• ${titular}: "${f.name}" (${(f.size / 1024 / 1024).toFixed(1)} MB)`,
+      )
+      setError(
+        `Los siguientes PDFs superan el límite de ${MAX_PDF_MB} MB. Comprime o reduce su tamaño antes de subir:\n\n${lines.join('\n')}`,
+      )
       return
     }
 
@@ -418,29 +434,50 @@ export default function NuevoPage() {
     setStep(4) // Processing screen
 
     try {
-      const formData = new FormData()
-      formData.append('titulares', JSON.stringify(titulares))
-      formData.append('inmueble', JSON.stringify(inmueble))
+      // ── 1ª llamada: crea carpeta + sube docs de Titular 1 ──────────────────
+      const formData1 = new FormData()
+      formData1.append('titulares', JSON.stringify(titulares))
+      formData1.append('inmueble', JSON.stringify(inmueble))
+      await appendTitularDocs(formData1, 't1_', docs.t1)
 
-      await appendTitularDocs(formData, 't1', docs.t1)
-      if (titulares.length > 1) await appendTitularDocs(formData, 't2', docs.t2)
-
-      const res = await fetch('/api/upload', { method: 'POST', body: formData })
-
-      if (!res.ok) {
-        if (res.status === 413) throw new Error('Los archivos son demasiado grandes. Intenta subir documentos más pequeños.')
-        const text = await res.text()
+      const res1 = await fetch('/api/upload', { method: 'POST', body: formData1 })
+      if (!res1.ok) {
+        if (res1.status === 413) throw new Error(
+          `Los archivos de ${titulares[0].nombre || 'Titular 1'} son demasiado grandes en total. Intenta subir menos documentos a la vez.`,
+        )
+        const text = await res1.text()
         let msg = 'Error al procesar la solicitud'
         try { msg = JSON.parse(text).error || msg } catch {}
         throw new Error(msg)
       }
+      const result = await res1.json()
+      const folderId = result.folderId
 
-      const result = await res.json()
+      // ── 2ª llamada: sube docs de Titular 2 (si existe) ────────────────────
+      if (titulares.length > 1) {
+        const t2 = titulares[1]
+        const formData2 = new FormData()
+        formData2.append('mode', 'returning')
+        formData2.append('folderId', folderId)
+        formData2.append('clientName', `${t2.nombre} ${t2.apellido1}`)
+        await appendTitularDocs(formData2, '', docs.t2)
+
+        const res2 = await fetch('/api/upload', { method: 'POST', body: formData2 })
+        if (!res2.ok) {
+          if (res2.status === 413) throw new Error(
+            `Los archivos de ${t2.nombre || 'Titular 2'} son demasiado grandes en total. Intenta subir menos documentos a la vez.`,
+          )
+          const text = await res2.text()
+          let msg = `Error al subir documentos de ${t2.nombre || 'Titular 2'}`
+          try { msg = JSON.parse(text).error || msg } catch {}
+          throw new Error(msg)
+        }
+      }
 
       const dni = titulares[0].dni
       localStorage.setItem('zen_client', JSON.stringify({
         dni,
-        folderId: result.folderId,
+        folderId,
         name: `${titulares[0].nombre} ${titulares[0].apellido1}`,
       }))
       setClienteDni(dni)
@@ -668,7 +705,7 @@ export default function NuevoPage() {
 
         {/* Error message */}
         {error && (
-          <div className="mt-4 bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm">
+          <div className="mt-4 bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm whitespace-pre-line">
             {error}
           </div>
         )}

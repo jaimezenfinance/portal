@@ -103,12 +103,13 @@ export default function ExpedientePage() {
     const hasFiles = Object.values(docs).some(arr => arr.length > 0)
     if (!hasFiles) { setError('Sube al menos un documento'); return }
 
-    // Check file sizes before uploading (4 MB max per PDF file)
+    // Report ALL oversized PDFs at once
     const MAX_PDF_MB = 4
     const allFiles = Object.values(docs).flat()
-    const tooBig = allFiles.find(f => f.type === 'application/pdf' && f.size > MAX_PDF_MB * 1024 * 1024)
-    if (tooBig) {
-      setError(`"${tooBig.name}" es demasiado grande (${(tooBig.size / 1024 / 1024).toFixed(1)} MB). Máximo ${MAX_PDF_MB} MB por archivo PDF.`)
+    const tooBig = allFiles.filter(f => f.type === 'application/pdf' && f.size > MAX_PDF_MB * 1024 * 1024)
+    if (tooBig.length > 0) {
+      const lines = tooBig.map(f => `• "${f.name}" (${(f.size / 1024 / 1024).toFixed(1)} MB)`)
+      setError(`Los siguientes PDFs superan el límite de ${MAX_PDF_MB} MB. Comprime o reduce su tamaño antes de subir:\n\n${lines.join('\n')}`)
       return
     }
 
@@ -242,7 +243,7 @@ export default function ExpedientePage() {
           {slot('extra2', 'Documento adicional 2')}
           {slot('extra3', 'Documento adicional 3')}
 
-          {error && <div className="mt-4 bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm">{error}</div>}
+          {error && <div className="mt-4 bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm whitespace-pre-line">{error}</div>}
         </div>
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-3">
           <div className="max-w-lg mx-auto">

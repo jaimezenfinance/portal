@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
         await uploadFile(folderId, `DNI_${firstName}.pdf`, pdfBuf, 'application/pdf')
       }
 
-      for (const field of ['nominas', 'renta', 'vidaLaboral', 'contrato', 'notaSimple', 'arras', 'extra1', 'extra2', 'extra3']) {
+      for (const field of OTHER_DOC_FIELDS) {
         const files = (formData.getAll(field) as File[]).filter(f => f && f.size > 0)
         if (files.length === 0) continue
         const prefix = getDocPrefix(field)
