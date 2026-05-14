@@ -170,8 +170,8 @@ function ProcessingScreen({ error, onRetry }: { error: string | null; onRetry: (
       setTimeout(() => {
         setQuoteIdx(i => (i + 1) % QUOTES.length)
         setFadeIn(true)
-      }, 350)
-    }, 3500)
+      }, 400)
+    }, 7000)
     return () => clearInterval(interval)
   }, [])
 

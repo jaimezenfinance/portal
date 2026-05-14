@@ -42,59 +42,6 @@ const OTHER_DOC_FIELDS = [
   'mod131', 'mod303', 'mod390', 'extra1', 'extra2', 'extra3',
 ]
 
-/** Upload DNI and all other docs for one titular using a form field prefix (t1_ or t2_) */
-async function uploadTitularDocs(
-  formData: FormData,
-  folderId: string,
-  tPrefix: string,
-  firstName: string,
-) {
-  // ── DNI ──────────────────────────────────────────────────────────────────
-  const dniFrontFile = formData.get(`${tPrefix}_dniFront`) as File | null
-  const dniBackFile = formData.get(`${tPrefix}_dniBack`) as File | null
-
-  if (dniFrontFile && dniBackFile) {
-    const frontBuf = Buffer.from(await dniFrontFile.arrayBuffer())
-    const backBuf = Buffer.from(await dniBackFile.arrayBuffer())
-    try {
-      const combined = await combineDniImages(frontBuf, backBuf)
-      await uploadFile(folderId, `DNI_${firstName}`, combined, 'application/pdf')
-    } catch {
-      // Fallback: upload separately
-      const fb2 = Buffer.from(await dniFrontFile.arrayBuffer())
-      await uploadFile(folderId, `DNI_FRONT_${firstName}.pdf`, await singleDniToPdf(fb2), 'application/pdf')
-      const bb2 = Buffer.from(await dniBackFile.arrayBuffer())
-      await uploadFile(folderId, `DNI_BACK_${firstName}.pdf`, await singleDniToPdf(bb2), 'application/pdf')
-    }
-  } else if (dniFrontFile) {
-    const buf = Buffer.from(await dniFrontFile.arrayBuffer())
-    await uploadFile(folderId, `DNI_${firstName}`, await singleDniToPdf(buf), 'application/pdf')
-  }
-
-  // ── Other docs ────────────────────────────────────────────────────────────
-  for (const field of OTHER_DOC_FIELDS) {
-    const files = (formData.getAll(`${tPrefix}_${field}`) as File[]).filter(f => f && f.size > 0)
-    if (files.length === 0) continue
-    const prefix = getDocPrefix(field)
-
-    if (files.length === 1) {
-      const f = files[0]
-      let buf: Buffer = Buffer.from(await f.arrayBuffer())
-      let mimeType = f.type || 'application/pdf'
-      if (mimeType.startsWith('image/')) {
-        buf = await convertImageToPdf(buf, mimeType)
-        mimeType = 'application/pdf'
-      }
-      await uploadFile(folderId, `${prefix}_${firstName}`, buf, mimeType)
-    } else {
-      const fileData = await Promise.all(
-        files.map(async f => ({ buffer: Buffer.from(await f.arrayBuffer()), mimeType: f.type || 'application/pdf' }))
-      )
-      const merged = await mergeFilesToPdf(fileData)
-      await uploadFile(folderId, `${prefix}_${firstName}`, merged, 'application/pdf')
-    }
-  }
-}
 
 export async function POST(request: NextRequest) {
   try {
