@@ -7,10 +7,6 @@ import { combineDniImages, singleDniToPdf, convertImageToPdf, mergeFilesToPdf } 
 
 export const maxDuration = 60
 
-function capitalize(s: string) {
-  return s.replace(/\b\w/g, c => c.toUpperCase())
-}
-
 function titleCase(s: string) {
   return s.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
 }
@@ -40,6 +36,66 @@ function getDocPrefix(fieldName: string): string {
   return map[fieldName] || fieldName.toUpperCase()
 }
 
+const OTHER_DOC_FIELDS = [
+  'nominas', 'renta', 'vidaLaboral', 'contrato', 'notaSimple', 'arras',
+  'bancarios', 'p7', 'vidaLaboralGib', 'recibosAutonomo', 'recibosSS',
+  'mod131', 'mod303', 'mod390', 'extra1', 'extra2', 'extra3',
+]
+
+/** Upload DNI and all other docs for one titular using a form field prefix (t1_ or t2_) */
+async function uploadTitularDocs(
+  formData: FormData,
+  folderId: string,
+  tPrefix: string,
+  firstName: string,
+) {
+  // ── DNI ──────────────────────────────────────────────────────────────────
+  const dniFrontFile = formData.get(`${tPrefix}_dniFront`) as File | null
+  const dniBackFile = formData.get(`${tPrefix}_dniBack`) as File | null
+
+  if (dniFrontFile && dniBackFile) {
+    const frontBuf = Buffer.from(await dniFrontFile.arrayBuffer())
+    const backBuf = Buffer.from(await dniBackFile.arrayBuffer())
+    try {
+      const combined = await combineDniImages(frontBuf, backBuf)
+      await uploadFile(folderId, `DNI_${firstName}`, combined, 'application/pdf')
+    } catch {
+      // Fallback: upload separately
+      const fb2 = Buffer.from(await dniFrontFile.arrayBuffer())
+      await uploadFile(folderId, `DNI_FRONT_${firstName}.pdf`, await singleDniToPdf(fb2), 'application/pdf')
+      const bb2 = Buffer.from(await dniBackFile.arrayBuffer())
+      await uploadFile(folderId, `DNI_BACK_${firstName}.pdf`, await singleDniToPdf(bb2), 'application/pdf')
+    }
+  } else if (dniFrontFile) {
+    const buf = Buffer.from(await dniFrontFile.arrayBuffer())
+    await uploadFile(folderId, `DNI_${firstName}`, await singleDniToPdf(buf), 'application/pdf')
+  }
+
+  // ── Other docs ────────────────────────────────────────────────────────────
+  for (const field of OTHER_DOC_FIELDS) {
+    const files = (formData.getAll(`${tPrefix}_${field}`) as File[]).filter(f => f && f.size > 0)
+    if (files.length === 0) continue
+    const prefix = getDocPrefix(field)
+
+    if (files.length === 1) {
+      const f = files[0]
+      let buf: Buffer = Buffer.from(await f.arrayBuffer())
+      let mimeType = f.type || 'application/pdf'
+      if (mimeType.startsWith('image/')) {
+        buf = await convertImageToPdf(buf, mimeType)
+        mimeType = 'application/pdf'
+      }
+      await uploadFile(folderId, `${prefix}_${firstName}`, buf, mimeType)
+    } else {
+      const fileData = await Promise.all(
+        files.map(async f => ({ buffer: Buffer.from(await f.arrayBuffer()), mimeType: f.type || 'application/pdf' }))
+      )
+      const merged = await mergeFilesToPdf(fileData)
+      await uploadFile(folderId, `${prefix}_${firstName}`, merged, 'application/pdf')
+    }
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
@@ -47,7 +103,7 @@ export async function POST(request: NextRequest) {
 
     const PARENT_FOLDER_ID = process.env.DRIVE_PARENT_FOLDER_ID!
 
-    // ── Returning client mode ────────────────────────────────────────────────
+    // ── Returning client mode ──────────────────────────────────────────────
     if (mode === 'returning') {
       const folderId = formData.get('folderId') as string
       const clientName = (formData.get('clientName') as string) || 'cliente'
@@ -87,100 +143,57 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
-    // ── New client mode ──────────────────────────────────────────────────────
+    // ── New client mode ────────────────────────────────────────────────────
     const titularesRaw = formData.get('titulares') as string
     const inmuebleRaw = formData.get('inmueble') as string
     const titulares = JSON.parse(titularesRaw)
     const inmueble = JSON.parse(inmuebleRaw)
 
     const titular1 = titulares[0]
-    const firstName = titular1.nombre.toLowerCase()
+    const firstName1 = titular1.nombre.toLowerCase()
 
     // Folder name: NOMBRE APELLIDO1 - TIPO/ CALLE AREA
     const calleStr = `${inmueble.tipoVia} ${inmueble.calle}`.toUpperCase()
     const areaStr = inmueble.area.toUpperCase()
     const folderName = `${titleCase(titular1.nombre)} ${titleCase(titular1.apellido1)} - ${calleStr} ${areaStr}`
 
-    // Create Drive folder with color based on area
     const folderColor = getAreaColor(inmueble.area)
     const folderId = await createFolder(folderName, PARENT_FOLDER_ID, folderColor)
 
-    // Handle DNI images
-    const dniFrontFile = formData.get('dniFront') as File | null
-    const dniBackFile = formData.get('dniBack') as File | null
+    // ── Upload docs for each titular ───────────────────────────────────────
+    await uploadTitularDocs(formData, folderId, 't1', firstName1)
 
-    if (dniFrontFile && dniBackFile) {
-      const frontBuf = Buffer.from(await dniFrontFile.arrayBuffer())
-      const backBuf = Buffer.from(await dniBackFile.arrayBuffer())
-      try {
-        const combined = await combineDniImages(frontBuf, backBuf)
-        await uploadFile(folderId, `DNI_${firstName}`, combined, 'application/pdf')
-      } catch {
-        // Fallback: upload front as PDF separately if combine fails
-        const frontBuf2 = Buffer.from(await dniFrontFile.arrayBuffer())
-        const pdfBuf = await singleDniToPdf(frontBuf2)
-        await uploadFile(folderId, `DNI_FRONT_${firstName}.pdf`, pdfBuf, 'application/pdf')
-        const backBuf2 = Buffer.from(await dniBackFile.arrayBuffer())
-        const pdfBuf2 = await singleDniToPdf(backBuf2)
-        await uploadFile(folderId, `DNI_BACK_${firstName}.pdf`, pdfBuf2, 'application/pdf')
-      }
-    } else if (dniFrontFile) {
-      const buf = Buffer.from(await dniFrontFile.arrayBuffer())
-      const pdfBuf = await singleDniToPdf(buf)
-      await uploadFile(folderId, `DNI_${firstName}`, pdfBuf, 'application/pdf')
+    if (titulares.length > 1) {
+      const titular2 = titulares[1]
+      const firstName2 = titular2.nombre.toLowerCase()
+      await uploadTitularDocs(formData, folderId, 't2', firstName2)
     }
 
-    // Other documents — multiple files merged into a single PDF
-    for (const field of ['nominas', 'renta', 'vidaLaboral', 'contrato', 'notaSimple', 'arras',
-      'bancarios', 'p7', 'vidaLaboralGib', 'recibosAutonomo', 'recibosSS', 'mod131', 'mod303', 'mod390', 'extra1', 'extra2', 'extra3']) {
-      const files = (formData.getAll(field) as File[]).filter(f => f && f.size > 0)
-      if (files.length === 0) continue
-      const prefix = getDocPrefix(field)
-
-      if (files.length === 1) {
-        // Single file — convert image to PDF if needed
-        const f = files[0]
-        let buf: Buffer = Buffer.from(await f.arrayBuffer())
-        let mimeType = f.type || 'application/pdf'
-        if (mimeType.startsWith('image/')) {
-          buf = await convertImageToPdf(buf, mimeType)
-          mimeType = 'application/pdf'
-        }
-        await uploadFile(folderId, `${prefix}_${firstName}`, buf, mimeType)
-      } else {
-        // Multiple files — merge all into one PDF
-        const fileData = await Promise.all(files.map(async f => ({
-          buffer: Buffer.from(await f.arrayBuffer()),
-          mimeType: f.type || 'application/pdf',
-        })))
-        const merged = await mergeFilesToPdf(fileData)
-        await uploadFile(folderId, `${prefix}_${firstName}`, merged, 'application/pdf')
-      }
-    }
-
-    // Auto-upload docx template
+    // ── Auto-upload docx template ──────────────────────────────────────────
     const docxPath = path.join(process.cwd(), 'public', 'Expediente_HIPOTECA.docx')
     if (fs.existsSync(docxPath)) {
       const docxBuf = fs.readFileSync(docxPath)
-      await uploadFile(folderId, 'Expediente_HIPOTECA.docx', docxBuf, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+      await uploadFile(folderId, 'Expediente_HIPOTECA.docx', docxBuf,
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
     }
 
-    // Create subfolders
+    // ── Create subfolders ──────────────────────────────────────────────────
     await createFolder('Otros', folderId)
     await createFolder('Tasación', folderId)
     const liquidacionesFolderId = await createFolder('Liquidaciones', folderId)
 
-    // Upload PLANTILLA LIQUIDACIÓN to Liquidaciones subfolder
     const plantillaPath = path.join(process.cwd(), 'public', 'PLANTILLA LIQUIDACIÓN COMPRAVENTA.xlsx')
     if (fs.existsSync(plantillaPath)) {
       const plantillaBuf = fs.readFileSync(plantillaPath)
-      await uploadFile(liquidacionesFolderId, 'PLANTILLA LIQUIDACIÓN COMPRAVENTA.xlsx', plantillaBuf, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+      await uploadFile(liquidacionesFolderId, 'PLANTILLA LIQUIDACIÓN COMPRAVENTA.xlsx', plantillaBuf,
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     }
 
-    // Create Notion entry
+    // ── Create Notion entry ────────────────────────────────────────────────
     const precioCompra = inmueble.precioCompra ? parseFloat(inmueble.precioCompra) : undefined
     const arras = inmueble.entradaArras ? parseFloat(inmueble.entradaArras) : undefined
     const t2 = titulares[1]
+
     await createClientEntry({
       name: `${titular1.nombre} ${titular1.apellido1}`,
       dni: titular1.dni,
@@ -190,8 +203,20 @@ export async function POST(request: NextRequest) {
       direccion: calleStr,
       precioCompra,
       arras,
-      titular1: { nombre: `${titular1.nombre} ${titular1.apellido1}`, dni: titular1.dni, email: titular1.email, telefono: titular1.telefono, edad: titular1.edad ? parseInt(titular1.edad) : undefined },
-      titular2: t2 ? { nombre: `${t2.nombre} ${t2.apellido1}`, dni: t2.dni, email: t2.email, telefono: t2.telefono, edad: t2.edad ? parseInt(t2.edad) : undefined } : undefined,
+      titular1: {
+        nombre: `${titular1.nombre} ${titular1.apellido1}`,
+        dni: titular1.dni,
+        email: titular1.email,
+        telefono: titular1.telefono,
+        edad: titular1.edad ? parseInt(titular1.edad) : undefined,
+      },
+      titular2: t2 ? {
+        nombre: `${t2.nombre} ${t2.apellido1}`,
+        dni: t2.dni,
+        email: t2.email,
+        telefono: t2.telefono,
+        edad: t2.edad ? parseInt(t2.edad) : undefined,
+      } : undefined,
     })
 
     return NextResponse.json({ ok: true, folderId })
