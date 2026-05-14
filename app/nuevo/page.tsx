@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import Header from '@/components/Header'
 import Stepper from '@/components/Stepper'
 import FileUploadSlot from '@/components/FileUploadSlot'
@@ -69,39 +69,146 @@ const emptyTitularDocs = (): TitularDocs => ({
 
 const emptyAllDocs = (): AllDocs => ({ t1: emptyTitularDocs(), t2: emptyTitularDocs() })
 
-// ─── Module-level helper: append titular docs to FormData ────────────────────
+// ─── Quotes for processing screen ────────────────────────────────────────────
 
-/**
- * Append one titular's docs to a FormData object.
- * fieldPrefix: 't1_' / 't2_' for new-client calls; '' for returning-client calls.
- */
-async function appendTitularDocs(
-  formData: FormData,
-  fieldPrefix: string,
-  d: TitularDocs,
-) {
+const QUOTES = [
+  // Profesional
+  'Tu documentación está en las mejores manos.',
+  'Gestionamos cada detalle para que tú no tengas que hacerlo.',
+  'Trabajamos para que tu hipoteca sea una realidad.',
+  // Cercano
+  'Casi listo, te lo prometemos 🙌',
+  'Unos segundos más y ya está todo organizado.',
+  'Estamos en ello, no tardamos nada.',
+  // Motivacional
+  'El primer paso hacia tu nuevo hogar.',
+  'Cada documento nos acerca más a tu sueño.',
+  'Tu casa te está esperando.',
+]
+
+// ─── Upload helpers (module level — can call fetch + compress) ────────────────
+
+async function uploadReturningSlot(
+  folderId: string,
+  clientName: string,
+  fields: Record<string, File[]>,
+): Promise<void> {
+  const fd = new FormData()
+  fd.append('mode', 'returning')
+  fd.append('folderId', folderId)
+  fd.append('clientName', clientName)
+  for (const [name, files] of Object.entries(fields)) {
+    for (const f of files) fd.append(name, f)
+  }
+  const res = await fetch('/api/upload', { method: 'POST', body: fd })
+  if (!res.ok) {
+    if (res.status === 413) throw new Error(
+      'Un archivo es demasiado grande para subir solo. Comprime el PDF e inténtalo de nuevo.',
+    )
+    const text = await res.text()
+    let msg = 'Error al subir documento'
+    try { msg = JSON.parse(text).error || msg } catch {}
+    throw new Error(msg)
+  }
+}
+
+async function uploadTitularSlots(folderId: string, titular: Titular, d: TitularDocs) {
+  const clientName = `${titular.nombre} ${titular.apellido1}`
   const c = compressImageFile
   const cs = compressFiles
-  const k = (name: string) => `${fieldPrefix}${name}`
-  if (d.dni[0]) formData.append(k('dniFront'), await c(d.dni[0]))
-  if (d.dni[1]) formData.append(k('dniBack'), await c(d.dni[1]))
-  for (const f of await cs(d.nominas)) formData.append(k('nominas'), f)
-  if (d.renta[0]) formData.append(k('renta'), await c(d.renta[0]))
-  if (d.vidaLaboral[0]) formData.append(k('vidaLaboral'), await c(d.vidaLaboral[0]))
-  if (d.vidaLaboralGib[0]) formData.append(k('vidaLaboralGib'), await c(d.vidaLaboralGib[0]))
-  if (d.contrato[0]) formData.append(k('contrato'), await c(d.contrato[0]))
-  if (d.p7[0]) formData.append(k('p7'), await c(d.p7[0]))
-  for (const f of await cs(d.recibosAutonomo)) formData.append(k('recibosAutonomo'), f)
-  for (const f of await cs(d.recibosSS)) formData.append(k('recibosSS'), f)
-  for (const f of await cs(d.mod131)) formData.append(k('mod131'), f)
-  for (const f of await cs(d.mod303)) formData.append(k('mod303'), f)
-  if (d.mod390[0]) formData.append(k('mod390'), await c(d.mod390[0]))
-  for (const f of await cs(d.bancarios)) formData.append(k('bancarios'), f)
-  if (d.notaSimple[0]) formData.append(k('notaSimple'), await c(d.notaSimple[0]))
-  if (d.arras[0]) formData.append(k('arras'), await c(d.arras[0]))
-  if (d.extra1[0]) formData.append(k('extra1'), await c(d.extra1[0]))
-  if (d.extra2[0]) formData.append(k('extra2'), await c(d.extra2[0]))
-  if (d.extra3[0]) formData.append(k('extra3'), await c(d.extra3[0]))
+
+  // DNI — front + back in a single call (API combines them)
+  if (d.dni[0]) {
+    const fields: Record<string, File[]> = { dniFront: [await c(d.dni[0])] }
+    if (d.dni[1]) fields.dniBack = [await c(d.dni[1])]
+    await uploadReturningSlot(folderId, clientName, fields)
+  }
+
+  // Single-file slots
+  const singleSlots: [string, File[]][] = [
+    ['renta',          d.renta],
+    ['vidaLaboral',    d.vidaLaboral],
+    ['vidaLaboralGib', d.vidaLaboralGib],
+    ['contrato',       d.contrato],
+    ['notaSimple',     d.notaSimple],
+    ['arras',          d.arras],
+    ['p7',             d.p7],
+    ['mod390',         d.mod390],
+    ['extra1',         d.extra1],
+    ['extra2',         d.extra2],
+    ['extra3',         d.extra3],
+  ]
+  for (const [field, files] of singleSlots) {
+    if (files.length === 0) continue
+    await uploadReturningSlot(folderId, clientName, { [field]: [await c(files[0])] })
+  }
+
+  // Multi-file slots
+  const multiSlots: [string, File[]][] = [
+    ['nominas',         d.nominas],
+    ['bancarios',       d.bancarios],
+    ['recibosAutonomo', d.recibosAutonomo],
+    ['recibosSS',       d.recibosSS],
+    ['mod131',          d.mod131],
+    ['mod303',          d.mod303],
+  ]
+  for (const [field, files] of multiSlots) {
+    if (files.length === 0) continue
+    await uploadReturningSlot(folderId, clientName, { [field]: await cs(files) })
+  }
+}
+
+// ─── ProcessingScreen component (module level — has its own quote state) ──────
+
+function ProcessingScreen({ error, onRetry }: { error: string | null; onRetry: () => void }) {
+  const [quoteIdx, setQuoteIdx] = useState(0)
+  const [fadeIn, setFadeIn] = useState(true)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFadeIn(false)
+      setTimeout(() => {
+        setQuoteIdx(i => (i + 1) % QUOTES.length)
+        setFadeIn(true)
+      }, 350)
+    }, 3500)
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Header />
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 text-center">
+        <Mascot size={160} animate={true} />
+        <h2 className="text-xl font-semibold text-[#0f3693] mt-6 mb-2">
+          Procesando tu solicitud...
+        </h2>
+        <p
+          className="text-gray-500 text-sm italic mt-1 min-h-[1.5rem] transition-opacity duration-300"
+          style={{ opacity: fadeIn ? 1 : 0 }}
+        >
+          {QUOTES[quoteIdx]}
+        </p>
+        <div className="flex justify-center gap-2 mt-5">
+          {[0, 1, 2].map(i => (
+            <div
+              key={i}
+              className="w-2.5 h-2.5 bg-[#ffbeb8] rounded-full animate-bounce"
+              style={{ animationDelay: `${i * 0.18}s` }}
+            />
+          ))}
+        </div>
+        {error && (
+          <div className="mt-6 bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm max-w-sm whitespace-pre-line">
+            {error}
+            <button onClick={onRetry} className="block mt-2 text-[#0f3693] underline mx-auto">
+              Volver e intentar de nuevo
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 // ─── TitularForm (module level — prevents remount on re-render) ──────────────
@@ -119,7 +226,6 @@ function TitularForm({ index, data, onChange }: TitularFormProps) {
         {index === 0 ? 'Titular 1' : 'Titular 2'}
       </h3>
       <div className="space-y-3">
-        {/* Tipo de trabajador — first */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
             Tipo de trabajador <span className="text-red-500">*</span>
@@ -135,7 +241,6 @@ function TitularForm({ index, data, onChange }: TitularFormProps) {
           </select>
         </div>
 
-        {/* Nombre, Apellido1 */}
         {(['nombre', 'apellido1'] as const).map(field => (
           <div key={field}>
             <label className="block text-xs font-medium text-gray-600 mb-1 capitalize">
@@ -152,7 +257,6 @@ function TitularForm({ index, data, onChange }: TitularFormProps) {
           </div>
         ))}
 
-        {/* Edad */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
             Edad <span className="text-red-500">*</span>
@@ -166,7 +270,6 @@ function TitularForm({ index, data, onChange }: TitularFormProps) {
           />
         </div>
 
-        {/* DNI */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
             DNI/NIE <span className="text-red-500">*</span>
@@ -180,7 +283,6 @@ function TitularForm({ index, data, onChange }: TitularFormProps) {
           />
         </div>
 
-        {/* Teléfono */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
             Teléfono <span className="text-red-500">*</span>
@@ -194,7 +296,6 @@ function TitularForm({ index, data, onChange }: TitularFormProps) {
           />
         </div>
 
-        {/* Email */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
             Email <span className="text-red-500">*</span>
@@ -410,9 +511,9 @@ export default function NuevoPage() {
     const err = validateStep3()
     if (err) { setError(err); return }
 
-    // Report ALL oversized PDFs at once so the user knows exactly what to fix
+    // Report ALL oversized PDFs before uploading anything
     const MAX_PDF_MB = 4
-    const labeledFiles: { file: File; titular: string }[] = [
+    const labeledFiles = [
       ...Object.values(docs.t1).flat().map(f => ({ file: f, titular: titulares[0].nombre || 'Titular 1' })),
       ...Object.values(docs.t2).flat().map(f => ({ file: f, titular: titulares[1]?.nombre || 'Titular 2' })),
     ]
@@ -421,8 +522,7 @@ export default function NuevoPage() {
     )
     if (tooBig.length > 0) {
       const lines = tooBig.map(
-        ({ file: f, titular }) =>
-          `• ${titular}: "${f.name}" (${(f.size / 1024 / 1024).toFixed(1)} MB)`,
+        ({ file: f, titular }) => `• ${titular}: "${f.name}" (${(f.size / 1024 / 1024).toFixed(1)} MB)`,
       )
       setError(
         `Los siguientes PDFs superan el límite de ${MAX_PDF_MB} MB. Comprime o reduce su tamaño antes de subir:\n\n${lines.join('\n')}`,
@@ -431,48 +531,27 @@ export default function NuevoPage() {
     }
 
     setError(null)
-    setStep(4) // Processing screen
+    setStep(4)
 
     try {
-      // ── 1ª llamada: crea carpeta + sube docs de Titular 1 ──────────────────
-      const formData1 = new FormData()
-      formData1.append('titulares', JSON.stringify(titulares))
-      formData1.append('inmueble', JSON.stringify(inmueble))
-      await appendTitularDocs(formData1, 't1_', docs.t1)
+      // ── Paso 1: crear carpeta + entrada Notion (sin archivos) ──────────────
+      const metaFd = new FormData()
+      metaFd.append('mode', 'createOnly')
+      metaFd.append('titulares', JSON.stringify(titulares))
+      metaFd.append('inmueble', JSON.stringify(inmueble))
 
-      const res1 = await fetch('/api/upload', { method: 'POST', body: formData1 })
-      if (!res1.ok) {
-        if (res1.status === 413) throw new Error(
-          `Los archivos de ${titulares[0].nombre || 'Titular 1'} son demasiado grandes en total. Intenta subir menos documentos a la vez.`,
-        )
-        const text = await res1.text()
-        let msg = 'Error al procesar la solicitud'
+      const metaRes = await fetch('/api/upload', { method: 'POST', body: metaFd })
+      if (!metaRes.ok) {
+        const text = await metaRes.text()
+        let msg = 'Error al crear el expediente'
         try { msg = JSON.parse(text).error || msg } catch {}
         throw new Error(msg)
       }
-      const result = await res1.json()
-      const folderId = result.folderId
+      const { folderId } = await metaRes.json()
 
-      // ── 2ª llamada: sube docs de Titular 2 (si existe) ────────────────────
-      if (titulares.length > 1) {
-        const t2 = titulares[1]
-        const formData2 = new FormData()
-        formData2.append('mode', 'returning')
-        formData2.append('folderId', folderId)
-        formData2.append('clientName', `${t2.nombre} ${t2.apellido1}`)
-        await appendTitularDocs(formData2, '', docs.t2)
-
-        const res2 = await fetch('/api/upload', { method: 'POST', body: formData2 })
-        if (!res2.ok) {
-          if (res2.status === 413) throw new Error(
-            `Los archivos de ${t2.nombre || 'Titular 2'} son demasiado grandes en total. Intenta subir menos documentos a la vez.`,
-          )
-          const text = await res2.text()
-          let msg = `Error al subir documentos de ${t2.nombre || 'Titular 2'}`
-          try { msg = JSON.parse(text).error || msg } catch {}
-          throw new Error(msg)
-        }
-      }
+      // ── Paso 2: subir docs slot por slot, un slot = una llamada ───────────
+      await uploadTitularSlots(folderId, titulares[0], docs.t1)
+      if (titulares.length > 1) await uploadTitularSlots(folderId, titulares[1], docs.t2)
 
       const dni = titulares[0].dni
       localStorage.setItem('zen_client', JSON.stringify({
@@ -481,8 +560,7 @@ export default function NuevoPage() {
         name: `${titulares[0].nombre} ${titulares[0].apellido1}`,
       }))
       setClienteDni(dni)
-
-      setTimeout(() => setStep(5), 1000)
+      setTimeout(() => setStep(5), 800)
     } catch (e: any) {
       setError(e.message)
     }
@@ -491,28 +569,10 @@ export default function NuevoPage() {
   // ── Processing screen ──────────────────────────────────────────────────────
   if (step === 4) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        <Header />
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 text-center">
-          <Mascot size={160} animate={true} />
-          <h2 className="text-xl font-semibold text-[#0f3693] mt-6 mb-2">Procesando tu solicitud...</h2>
-          <p className="text-gray-400 text-sm">Estamos organizando tus documentos. Un momento.</p>
-          <div className="flex justify-center gap-2 mt-5">
-            {[0, 1, 2].map(i => (
-              <div key={i} className="w-2.5 h-2.5 bg-[#ffbeb8] rounded-full animate-bounce"
-                style={{ animationDelay: `${i * 0.18}s` }} />
-            ))}
-          </div>
-          {error && (
-            <div className="mt-6 bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm max-w-sm">
-              {error}
-              <button onClick={() => setStep(3)} className="block mt-2 text-[#0f3693] underline mx-auto">
-                Volver e intentar de nuevo
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+      <ProcessingScreen
+        error={error}
+        onRetry={() => { setError(null); setStep(3) }}
+      />
     )
   }
 
@@ -667,7 +727,6 @@ export default function NuevoPage() {
             </p>
 
             {twoTitulares ? (
-              /* ── Two titulares: collapsible sections ── */
               <>
                 <TitularDocSection
                   titularKey="t1"
@@ -689,7 +748,6 @@ export default function NuevoPage() {
                 />
               </>
             ) : (
-              /* ── Single titular: flat list ── */
               <TitularDocSection
                 titularKey="t1"
                 titular={titulares[0]}

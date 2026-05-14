@@ -103,6 +103,73 @@ export async function POST(request: NextRequest) {
 
     const PARENT_FOLDER_ID = process.env.DRIVE_PARENT_FOLDER_ID!
 
+    // ── Create-only mode: folder + Notion entry, no file uploads ──────────
+    if (mode === 'createOnly') {
+      const titularesRaw = formData.get('titulares') as string
+      const inmuebleRaw = formData.get('inmueble') as string
+      const titulares = JSON.parse(titularesRaw)
+      const inmueble = JSON.parse(inmuebleRaw)
+      const titular1 = titulares[0]
+
+      const calleStr = `${inmueble.tipoVia} ${inmueble.calle}`.toUpperCase()
+      const areaStr = inmueble.area.toUpperCase()
+      const folderName = `${titleCase(titular1.nombre)} ${titleCase(titular1.apellido1)} - ${calleStr} ${areaStr}`
+
+      const folderColor = getAreaColor(inmueble.area)
+      const folderId = await createFolder(folderName, PARENT_FOLDER_ID, folderColor)
+
+      // Auto-upload docx template
+      const docxPath = path.join(process.cwd(), 'public', 'Expediente_HIPOTECA.docx')
+      if (fs.existsSync(docxPath)) {
+        const docxBuf = fs.readFileSync(docxPath)
+        await uploadFile(folderId, 'Expediente_HIPOTECA.docx', docxBuf,
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+      }
+
+      // Create subfolders
+      await createFolder('Otros', folderId)
+      await createFolder('Tasación', folderId)
+      const liquidacionesFolderId = await createFolder('Liquidaciones', folderId)
+
+      const plantillaPath = path.join(process.cwd(), 'public', 'PLANTILLA LIQUIDACIÓN COMPRAVENTA.xlsx')
+      if (fs.existsSync(plantillaPath)) {
+        const plantillaBuf = fs.readFileSync(plantillaPath)
+        await uploadFile(liquidacionesFolderId, 'PLANTILLA LIQUIDACIÓN COMPRAVENTA.xlsx', plantillaBuf,
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+      }
+
+      // Create Notion entry
+      const precioCompra = inmueble.precioCompra ? parseFloat(inmueble.precioCompra) : undefined
+      const arras = inmueble.entradaArras ? parseFloat(inmueble.entradaArras) : undefined
+      const t2 = titulares[1]
+      await createClientEntry({
+        name: `${titular1.nombre} ${titular1.apellido1}`,
+        dni: titular1.dni,
+        telefono: titular1.telefono,
+        email: titular1.email,
+        area: inmueble.area,
+        direccion: calleStr,
+        precioCompra,
+        arras,
+        titular1: {
+          nombre: `${titular1.nombre} ${titular1.apellido1}`,
+          dni: titular1.dni,
+          email: titular1.email,
+          telefono: titular1.telefono,
+          edad: titular1.edad ? parseInt(titular1.edad) : undefined,
+        },
+        titular2: t2 ? {
+          nombre: `${t2.nombre} ${t2.apellido1}`,
+          dni: t2.dni,
+          email: t2.email,
+          telefono: t2.telefono,
+          edad: t2.edad ? parseInt(t2.edad) : undefined,
+        } : undefined,
+      })
+
+      return NextResponse.json({ ok: true, folderId })
+    }
+
     // ── Returning client mode ──────────────────────────────────────────────
     if (mode === 'returning') {
       const folderId = formData.get('folderId') as string
@@ -143,83 +210,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
-    // ── New client mode ────────────────────────────────────────────────────
-    const titularesRaw = formData.get('titulares') as string
-    const inmuebleRaw = formData.get('inmueble') as string
-    const titulares = JSON.parse(titularesRaw)
-    const inmueble = JSON.parse(inmuebleRaw)
-
-    const titular1 = titulares[0]
-    const firstName1 = titular1.nombre.toLowerCase()
-
-    // Folder name: NOMBRE APELLIDO1 - TIPO/ CALLE AREA
-    const calleStr = `${inmueble.tipoVia} ${inmueble.calle}`.toUpperCase()
-    const areaStr = inmueble.area.toUpperCase()
-    const folderName = `${titleCase(titular1.nombre)} ${titleCase(titular1.apellido1)} - ${calleStr} ${areaStr}`
-
-    const folderColor = getAreaColor(inmueble.area)
-    const folderId = await createFolder(folderName, PARENT_FOLDER_ID, folderColor)
-
-    // ── Upload docs for each titular ───────────────────────────────────────
-    await uploadTitularDocs(formData, folderId, 't1', firstName1)
-
-    if (titulares.length > 1) {
-      const titular2 = titulares[1]
-      const firstName2 = titular2.nombre.toLowerCase()
-      await uploadTitularDocs(formData, folderId, 't2', firstName2)
-    }
-
-    // ── Auto-upload docx template ──────────────────────────────────────────
-    const docxPath = path.join(process.cwd(), 'public', 'Expediente_HIPOTECA.docx')
-    if (fs.existsSync(docxPath)) {
-      const docxBuf = fs.readFileSync(docxPath)
-      await uploadFile(folderId, 'Expediente_HIPOTECA.docx', docxBuf,
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-    }
-
-    // ── Create subfolders ──────────────────────────────────────────────────
-    await createFolder('Otros', folderId)
-    await createFolder('Tasación', folderId)
-    const liquidacionesFolderId = await createFolder('Liquidaciones', folderId)
-
-    const plantillaPath = path.join(process.cwd(), 'public', 'PLANTILLA LIQUIDACIÓN COMPRAVENTA.xlsx')
-    if (fs.existsSync(plantillaPath)) {
-      const plantillaBuf = fs.readFileSync(plantillaPath)
-      await uploadFile(liquidacionesFolderId, 'PLANTILLA LIQUIDACIÓN COMPRAVENTA.xlsx', plantillaBuf,
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    }
-
-    // ── Create Notion entry ────────────────────────────────────────────────
-    const precioCompra = inmueble.precioCompra ? parseFloat(inmueble.precioCompra) : undefined
-    const arras = inmueble.entradaArras ? parseFloat(inmueble.entradaArras) : undefined
-    const t2 = titulares[1]
-
-    await createClientEntry({
-      name: `${titular1.nombre} ${titular1.apellido1}`,
-      dni: titular1.dni,
-      telefono: titular1.telefono,
-      email: titular1.email,
-      area: inmueble.area,
-      direccion: calleStr,
-      precioCompra,
-      arras,
-      titular1: {
-        nombre: `${titular1.nombre} ${titular1.apellido1}`,
-        dni: titular1.dni,
-        email: titular1.email,
-        telefono: titular1.telefono,
-        edad: titular1.edad ? parseInt(titular1.edad) : undefined,
-      },
-      titular2: t2 ? {
-        nombre: `${t2.nombre} ${t2.apellido1}`,
-        dni: t2.dni,
-        email: t2.email,
-        telefono: t2.telefono,
-        edad: t2.edad ? parseInt(t2.edad) : undefined,
-      } : undefined,
-    })
-
-    return NextResponse.json({ ok: true, folderId })
+    // Unknown mode
+    return NextResponse.json({ error: 'Modo no reconocido' }, { status: 400 })
   } catch (err: any) {
     console.error('Upload error:', err)
     return NextResponse.json({ error: err.message || 'Error interno del servidor' }, { status: 500 })
