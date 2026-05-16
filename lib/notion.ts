@@ -27,7 +27,7 @@ export async function createClientEntry(data: {
   const databaseId = process.env.NOTION_DATABASE_ID!
   const notion = getNotion()
   const properties: Record<string, any> = {
-    Name: {
+    Nombre: {
       title: [{ text: { content: data.name } }],
     },
     DNI: {
