@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import Header from '@/components/Header'
 import FileUploadSlot from '@/components/FileUploadSlot'
 import Mascot from '@/components/Mascot'
@@ -341,6 +341,14 @@ export default function ExpedientePage() {
   const [openT2, setOpenT2] = useState(false)
   const [openInmueble, setOpenInmueble] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const errorRef = useRef<HTMLDivElement>(null)
+
+  // Scroll to error automatically when it appears in upload phase
+  useEffect(() => {
+    if (error && phase === 'upload') {
+      setTimeout(() => errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)
+    }
+  }, [error, phase])
 
   const toggleT1 = useCallback(() => setOpenT1(v => !v), [])
   const toggleT2 = useCallback(() => setOpenT2(v => !v), [])
@@ -559,7 +567,7 @@ export default function ExpedientePage() {
           )}
 
           {error && error.startsWith('PDF_BIG:') ? (
-            <div className="mt-4 bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-left">
+            <div ref={errorRef} className="mt-4 bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-left">
               <p className="font-semibold text-red-700 mb-2">📄 Algunos archivos son demasiado grandes</p>
               <div className="text-red-600 mb-3 space-y-0.5">
                 {error.replace('PDF_BIG:', '').split('\n').map((line, i) => (
@@ -574,7 +582,7 @@ export default function ExpedientePage() {
               </p>
             </div>
           ) : error === 'UPLOAD_ERROR' ? (
-            <div className="mt-4 bg-amber-50 border border-amber-300 rounded-2xl p-4 text-sm text-left">
+            <div ref={errorRef} className="mt-4 bg-amber-50 border border-amber-300 rounded-2xl p-4 text-sm text-left">
               <p className="font-semibold text-amber-800 mb-1">⚠️ No hemos podido enviar un documento</p>
               <p className="text-xs text-amber-700 mb-1">
                 Comprueba tu conexión e inténtalo de nuevo. Si el problema continúa, contacta con tu asesor:
