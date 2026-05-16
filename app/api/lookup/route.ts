@@ -21,7 +21,13 @@ export async function GET(request: NextRequest) {
       if (folder) folderId = folder.id
     }
 
-    return NextResponse.json({ name: client.name, folderId: folderId || '', t2Name: client.t2Name || '' })
+    return NextResponse.json({
+      name: client.name,
+      folderId: folderId || '',
+      t2Name: client.t2Name || '',
+      t1Type: client.t1Type || 'espana',
+      t2Type: client.t2Type || 'espana',
+    })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

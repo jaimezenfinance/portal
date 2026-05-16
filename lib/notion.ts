@@ -11,6 +11,13 @@ function getNotion() {
   return new Client({ auth: token })
 }
 
+// Map internal type keys → Notion select option names
+const TIPO_TO_NOTION: Record<string, string> = {
+  espana: 'españa',
+  gibraltar: 'gibraltar',
+  autonomo: 'autonomo',
+}
+
 export async function createClientEntry(data: {
   name: string
   dni: string
@@ -21,6 +28,8 @@ export async function createClientEntry(data: {
   direccion?: string
   precioCompra?: number
   arras?: number
+  t1Type?: string
+  t2Type?: string
   titular1?: { nombre: string; dni: string; email: string; telefono: string; edad?: number }
   titular2?: { nombre: string; dni: string; email: string; telefono: string; edad?: number }
 }): Promise<void> {
@@ -58,6 +67,12 @@ export async function createClientEntry(data: {
   if (data.arras !== undefined) {
     properties['Arras'] = { number: data.arras }
   }
+  if (data.t1Type) {
+    properties['Tipo Trabajador #1'] = { select: { name: TIPO_TO_NOTION[data.t1Type] ?? data.t1Type } }
+  }
+  if (data.t2Type) {
+    properties['Tipo Trabajador #2'] = { select: { name: TIPO_TO_NOTION[data.t2Type] ?? data.t2Type } }
+  }
   if (data.titular1) {
     properties['Nombre #1'] = { rich_text: [{ text: { content: data.titular1.nombre } }] }
     properties['DNI #1'] = { rich_text: [{ text: { content: data.titular1.dni } }] }
@@ -94,7 +109,7 @@ export async function createClientEntry(data: {
   }
 }
 
-export async function findClientByDni(dni: string): Promise<{ name: string; folderId?: string } | null> {
+export async function findClientByDni(dni: string): Promise<{ name: string; folderId?: string; t2Name?: string; t1Type: string; t2Type: string } | null> {
   const databaseId = process.env.NOTION_DATABASE_ID!
   const notion = getNotion()
   const res = await notion.databases.query({
@@ -106,8 +121,18 @@ export async function findClientByDni(dni: string): Promise<{ name: string; fold
   })
   if (res.results.length === 0) return null
   const page = res.results[0] as any
+  // Map Notion select option names → internal type keys
+  const NOTION_TO_TIPO: Record<string, string> = {
+    'españa': 'espana',
+    'gibraltar': 'gibraltar',
+    'autonomo': 'autonomo',
+  }
   const name = page.properties?.Nombre?.title?.[0]?.text?.content || ''
   const folderId = page.properties?.FolderID?.rich_text?.[0]?.text?.content || undefined
   const t2Name = page.properties?.['Nombre #2']?.rich_text?.[0]?.text?.content || undefined
-  return { name, folderId, t2Name }
+  const rawT1 = page.properties?.['Tipo Trabajador #1']?.select?.name || ''
+  const rawT2 = page.properties?.['Tipo Trabajador #2']?.select?.name || ''
+  const t1Type = NOTION_TO_TIPO[rawT1] || 'espana'
+  const t2Type = NOTION_TO_TIPO[rawT2] || 'espana'
+  return { name, folderId, t2Name, t1Type, t2Type }
 }

@@ -90,6 +90,8 @@ export async function POST(request: NextRequest) {
       const arras = inmueble.entradaArras ? parseFloat(inmueble.entradaArras) : undefined
       const t2 = titulares[1]
       await createClientEntry({
+        t1Type: titular1.tipoTrabajador,
+        t2Type: t2?.tipoTrabajador,
         name: `${titular1.nombre} ${titular1.apellido1}`,
         dni: titular1.dni,
         telefono: titular1.telefono,

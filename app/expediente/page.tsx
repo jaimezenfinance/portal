@@ -286,7 +286,8 @@ export default function ExpedientePage() {
       setFolderId(data.folderId)
       setClientName(data.name)
       if (data.t2Name) setT2Name(data.t2Name)
-      // tipoTrabajador not stored in Notion — default to 'espana' (all fields visible)
+      if (data.t1Type) setT1Type(data.t1Type as TipoTrabajador)
+      if (data.t2Type) setT2Type(data.t2Type as TipoTrabajador)
       fetchExistingFiles(data.folderId)
       setPhase('upload')
     } catch (e: any) {
