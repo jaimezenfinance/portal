@@ -198,6 +198,14 @@ function ProcessingScreen({ error, onRetry }: { error: string | null; onRetry: (
             />
           ))}
         </div>
+
+        <div className="mt-8 bg-amber-50 border border-amber-300 rounded-xl px-4 py-2.5 flex items-center gap-2.5 max-w-xs">
+          <span className="text-lg flex-shrink-0">⚠️</span>
+          <p className="text-xs font-medium text-amber-800 text-left">
+            No cierres esta página mientras se suben tus documentos
+          </p>
+        </div>
+
         {error && (
           <div className="mt-6 bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm max-w-sm whitespace-pre-line">
             {error}
