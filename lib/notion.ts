@@ -106,7 +106,8 @@ export async function findClientByDni(dni: string): Promise<{ name: string; fold
   })
   if (res.results.length === 0) return null
   const page = res.results[0] as any
-  const name = page.properties?.Name?.title?.[0]?.text?.content || ''
+  const name = page.properties?.Nombre?.title?.[0]?.text?.content || ''
   const folderId = page.properties?.FolderID?.rich_text?.[0]?.text?.content || undefined
-  return { name, folderId }
+  const t2Name = page.properties?.['Nombre #2']?.rich_text?.[0]?.text?.content || undefined
+  return { name, folderId, t2Name }
 }

@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       if (folder) folderId = folder.id
     }
 
-    return NextResponse.json({ name: client.name, folderId: folderId || '' })
+    return NextResponse.json({ name: client.name, folderId: folderId || '', t2Name: client.t2Name || '' })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

@@ -566,6 +566,9 @@ export default function NuevoPage() {
         dni,
         folderId,
         name: `${titulares[0].nombre} ${titulares[0].apellido1}`,
+        t2Name: titulares.length > 1
+          ? `${titulares[1].nombre} ${titulares[1].apellido1}`
+          : undefined,
       }))
       setClienteDni(dni)
       setTimeout(() => setStep(5), 800)
