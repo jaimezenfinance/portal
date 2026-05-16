@@ -300,7 +300,7 @@ export default function ExpedientePage() {
     const hasT2 = Object.values(docsT2).some(a => a.length > 0)
     if (!hasT1 && !hasT2) { setError('Sube al menos un documento'); return }
 
-    const MAX_PDF_MB = 4
+    const MAX_PDF_MB = 4.3
     const allFiles = [...Object.values(docsT1).flat(), ...Object.values(docsT2).flat()]
     const tooBig = allFiles.filter(f => f.type === 'application/pdf' && f.size > MAX_PDF_MB * 1024 * 1024)
     if (tooBig.length > 0) {

@@ -520,7 +520,7 @@ export default function NuevoPage() {
     if (err) { setError(err); return }
 
     // Report ALL oversized PDFs before uploading anything
-    const MAX_PDF_MB = 4
+    const MAX_PDF_MB = 4.3
     const labeledFiles = [
       ...Object.values(docs.t1).flat().map(f => ({ file: f, titular: titulares[0].nombre || 'Titular 1' })),
       ...Object.values(docs.t2).flat().map(f => ({ file: f, titular: titulares[1]?.nombre || 'Titular 2' })),
