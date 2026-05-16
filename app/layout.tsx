@@ -2,8 +2,20 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Zen Finance — Portal de Documentación',
-  description: 'Portal de documentación para clientes de Zen Finance',
+  title: 'Portal de Documentación · Zen Finance',
+  description: 'Sube tus documentos de forma segura desde el móvil en menos de 5 minutos.',
+  openGraph: {
+    title: 'Portal de Documentación · Zen Finance',
+    description: 'Sube tus documentos de forma segura desde el móvil en menos de 5 minutos.',
+    images: [{ url: '/mascota zen.jpg', width: 400, height: 400 }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Portal de Documentación · Zen Finance',
+    description: 'Sube tus documentos de forma segura desde el móvil en menos de 5 minutos.',
+    images: ['/mascota zen.jpg'],
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
