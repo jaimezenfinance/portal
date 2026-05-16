@@ -339,7 +339,7 @@ export default function ExpedientePage() {
   const [existingFiles, setExistingFiles] = useState<string[]>([])
   const [openT1, setOpenT1] = useState(true)
   const [openT2, setOpenT2] = useState(false)
-  const [openInmueble, setOpenInmueble] = useState(false)
+  const [openInmueble, setOpenInmueble] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const errorRef = useRef<HTMLDivElement>(null)
 

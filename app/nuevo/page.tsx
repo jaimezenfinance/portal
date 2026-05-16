@@ -543,7 +543,7 @@ export default function NuevoPage() {
   })
   const [docs, setDocs] = useState<AllDocs>(emptyAllDocs())
   const [inmuebleDocs, setInmuebleDocs] = useState<InmuebleDocs>({ notaSimple: [], arras: [] })
-  const [openSections, setOpenSections] = useState({ t1: true, t2: false, inmueble: false })
+  const [openSections, setOpenSections] = useState({ t1: true, t2: false, inmueble: true })
   const [error, setError] = useState<string | null>(null)
   const [clienteDni, setClienteDni] = useState('')
   const errorRef = useRef<HTMLDivElement>(null)
