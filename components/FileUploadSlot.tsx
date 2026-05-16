@@ -65,7 +65,7 @@ export default function FileUploadSlot({ label, fieldName, required, multiple, f
           {files.map((f, i) => (
             <div key={i} className="flex items-center justify-between bg-blue-50 rounded-lg px-3 py-2 text-xs">
               <span className="text-[#0f3693] font-medium truncate max-w-[80%]">✅ {f.name}</span>
-              <button type="button" onClick={() => removeFile(i)} className="text-red-400 hover:text-red-600 ml-2">✕</button>
+              <button type="button" onClick={() => removeFile(i)} className="flex items-center gap-1 text-red-400 hover:text-red-600 ml-2 flex-shrink-0 text-xs font-semibold">✕ Eliminar</button>
             </div>
           ))}
         </div>

@@ -636,27 +636,45 @@ export default function NuevoPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header />
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-10 text-center">
-          <Mascot size={200} animate={false} />
-          <h2 className="text-2xl font-bold text-[#0f3693] mt-4 mb-4">¡Documentación enviada!</h2>
-          <div className="text-gray-600 leading-relaxed mb-6 space-y-1 px-4">
-            <p>Muchas gracias por enviarnos tu documentación.</p>
-            <p>Tu asesor se pondrá en contacto contigo en breve.</p>
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 text-center">
+          {/* Checkmark */}
+          <div className="w-20 h-20 rounded-full bg-[#0f3693] flex items-center justify-center mb-5">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#ffbeb8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
           </div>
-          <div className="bg-blue-50 border border-[#0f3693]/20 rounded-2xl p-4 mb-4">
-            <p className="text-xs text-gray-500 mb-1">Número de referencia</p>
-            <p className="text-lg font-bold text-[#0f3693]">{clienteDni}</p>
+
+          <h2 className="text-2xl font-bold text-[#0f3693] mb-2">¡Todo listo!</h2>
+          <p className="text-gray-500 text-sm leading-relaxed mb-7">
+            Hemos recibido tu documentación.<br />Te contactaremos en breve.
+          </p>
+
+          {/* DNI */}
+          <div className="bg-white border border-gray-200 rounded-2xl px-8 py-4 mb-7 shadow-sm">
+            <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Tu número de referencia</p>
+            <p className="text-2xl font-bold text-[#0f3693] tracking-wide">{clienteDni}</p>
           </div>
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mb-8 max-w-xs text-left">
-            <p className="text-xs font-semibold text-amber-800 mb-1">¿Necesitas añadir más documentos?</p>
-            <p className="text-xs text-amber-700">
-              Accede a <span className="font-semibold">Ya tengo expediente</span> e introduce el DNI del Titular 1:{' '}
-              <span className="font-bold">{clienteDni}</span>
-            </p>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 w-full max-w-xs mb-4">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="text-xs text-gray-400 whitespace-nowrap">¿Quieres añadir más documentos?</span>
+            <div className="flex-1 h-px bg-gray-200" />
           </div>
-          <a href="/" className="inline-block bg-[#0f3693] text-white rounded-xl px-6 py-3 font-medium hover:bg-blue-800 transition-colors">
-            Volver al inicio
-          </a>
+
+          <p className="text-sm text-gray-500 mb-6 max-w-xs leading-relaxed">
+            Accede a <span className="font-semibold text-[#0f3693]">Ya tengo expediente</span> e introduce el DNI del Titular 1
+          </p>
+
+          {/* Buttons */}
+          <div className="flex flex-col gap-3 w-full max-w-xs">
+            <a href="/" className="w-full py-3.5 rounded-2xl bg-[#0f3693] text-white font-semibold text-sm text-center">
+              Volver al inicio
+            </a>
+            <a href="/expediente" className="w-full py-3.5 rounded-2xl border-2 border-[#0f3693] text-[#0f3693] font-semibold text-sm text-center">
+              Añadir más documentos →
+            </a>
+          </div>
         </div>
       </div>
     )
