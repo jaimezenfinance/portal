@@ -5,3 +5,8 @@
 
 * { font-family: 'Prompt', sans-serif; }
 body { background-color: #f8f9fc; }
+
+/* Prevent iOS auto-zoom on input focus (triggers when font-size < 16px) */
+@media screen and (max-width: 768px) {
+  input, select, textarea { font-size: 16px !important; }
+}
