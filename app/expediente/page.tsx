@@ -489,6 +489,12 @@ export default function ExpedientePage() {
     const firstName1 = clientName.split(' ')[0]
     const hasTwoTitulares = !!t2Name
 
+    // Filter existing files per titular by first-name suffix (e.g. DNI_ana, NOMINA_pedro)
+    const t1First = firstName1.toLowerCase()
+    const t2First = t2Name.split(' ')[0].toLowerCase()
+    const existingT1 = existingFiles.filter(f => f.toLowerCase().includes(`_${t1First}`))
+    const existingT2 = existingFiles.filter(f => f.toLowerCase().includes(`_${t2First}`))
+
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -517,21 +523,21 @@ export default function ExpedientePage() {
             <>
               <DocSlots
                 tKey="t1" docs={docsT1} onFiles={handleFiles}
-                existingFiles={existingFiles}
+                existingFiles={existingT1}
                 tipoTrabajador={t1Type}
                 isOpen={openT1} onToggle={toggleT1}
                 collapsible={true} label={clientName}
               />
               <DocSlots
                 tKey="t2" docs={docsT2} onFiles={handleFiles}
-                existingFiles={[]}
+                existingFiles={existingT2}
                 tipoTrabajador={t2Type}
                 isOpen={openT2} onToggle={toggleT2}
                 collapsible={true} label={t2Name}
               />
               <InmuebleDocSection
                 docs={docsInmueble} onFiles={handleInmuebleFiles}
-                existingFiles={existingFiles}
+                existingFiles={existingT1}
                 collapsible={true} isOpen={openInmueble} onToggle={toggleInmueble}
               />
             </>
@@ -539,14 +545,14 @@ export default function ExpedientePage() {
             <>
               <DocSlots
                 tKey="t1" docs={docsT1} onFiles={handleFiles}
-                existingFiles={existingFiles}
+                existingFiles={existingT1}
                 tipoTrabajador={t1Type}
                 isOpen={true} onToggle={() => {}}
                 collapsible={false} label={clientName}
               />
               <InmuebleDocSection
                 docs={docsInmueble} onFiles={handleInmuebleFiles}
-                existingFiles={existingFiles}
+                existingFiles={existingT1}
                 collapsible={false} isOpen={true} onToggle={() => {}}
               />
             </>
