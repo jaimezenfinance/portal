@@ -210,8 +210,6 @@ function DocSlots({
       {tipoTrabajador !== 'autonomo' && slot('contrato', 'Contrato de trabajo')}
 
       {slot('bancarios', '3 meses movimientos banco', { multiple: true })}
-      {slot('notaSimple', 'Nota simple del inmueble')}
-      {slot('arras', 'Contrato de arras')}
       {slot('extra1', 'Documento adicional 1')}
       {slot('extra2', 'Documento adicional 2')}
       {slot('extra3', 'Documento adicional 3')}
@@ -252,6 +250,79 @@ function DocSlots({
   )
 }
 
+// ─── InmuebleDocSection (module level) ───────────────────────────────────────
+
+interface InmuebleDocs {
+  notaSimple: File[]
+  arras: File[]
+}
+
+interface InmuebleDocSectionProps {
+  docs: InmuebleDocs
+  onFiles: (field: keyof InmuebleDocs) => (files: File[]) => void
+  existingFiles: string[]
+  collapsible: boolean
+  isOpen: boolean
+  onToggle: () => void
+}
+
+function InmuebleDocSection({ docs, onFiles, existingFiles, collapsible, isOpen, onToggle }: InmuebleDocSectionProps) {
+  const alreadyNotaSimple = existingFiles.length > 0 && existingFiles.some(f => f.toUpperCase().startsWith('NOTASIMPLE_'))
+  const alreadyArras = existingFiles.length > 0 && existingFiles.some(f => f.toUpperCase().startsWith('ARRAS_'))
+
+  const content = (
+    <>
+      <FileUploadSlot
+        label="Nota simple del inmueble"
+        fieldName="inmueble_notaSimple"
+        files={docs.notaSimple}
+        onFiles={onFiles('notaSimple')}
+        alreadyUploaded={alreadyNotaSimple}
+      />
+      <FileUploadSlot
+        label="Contrato de arras"
+        fieldName="inmueble_arras"
+        files={docs.arras}
+        onFiles={onFiles('arras')}
+        alreadyUploaded={alreadyArras}
+      />
+    </>
+  )
+
+  if (!collapsible) return <div>{content}</div>
+
+  return (
+    <div className="mb-4 border border-gray-200 rounded-2xl overflow-hidden bg-white">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-gray-50 transition-colors"
+      >
+        <div className="flex items-center gap-3 text-left">
+          <span className="w-7 h-7 rounded-full bg-[#ffbeb8] text-[#0f3693] text-sm flex items-center justify-center flex-shrink-0">
+            🏠
+          </span>
+          <div>
+            <p className="text-sm font-semibold text-[#0f3693]">Inmueble</p>
+            <p className="text-xs text-gray-400">Documentos compartidos del inmueble</p>
+          </div>
+        </div>
+        <svg
+          className={`w-5 h-5 text-gray-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {isOpen && (
+        <div className="px-3 pb-3 pt-2 border-t border-gray-100">
+          {content}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ExpedientePage() {
@@ -264,13 +335,22 @@ export default function ExpedientePage() {
   const [t2Type, setT2Type] = useState<TipoTrabajador>('espana')
   const [docsT1, setDocsT1] = useState<Docs>(emptyDocs())
   const [docsT2, setDocsT2] = useState<Docs>(emptyDocs())
+  const [docsInmueble, setDocsInmueble] = useState<InmuebleDocs>({ notaSimple: [], arras: [] })
   const [existingFiles, setExistingFiles] = useState<string[]>([])
   const [openT1, setOpenT1] = useState(true)
   const [openT2, setOpenT2] = useState(false)
+  const [openInmueble, setOpenInmueble] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const toggleT1 = useCallback(() => setOpenT1(v => !v), [])
   const toggleT2 = useCallback(() => setOpenT2(v => !v), [])
+  const toggleInmueble = useCallback(() => setOpenInmueble(v => !v), [])
+
+  const handleInmuebleFiles = useCallback(
+    (field: keyof InmuebleDocs) => (files: File[]) =>
+      setDocsInmueble(prev => ({ ...prev, [field]: files })),
+    [],
+  )
 
   const handleFiles = useCallback(
     (tKey: 't1' | 't2', field: keyof Docs) =>
@@ -327,10 +407,11 @@ export default function ExpedientePage() {
   const handleUpload = async () => {
     const hasT1 = Object.values(docsT1).some(a => a.length > 0)
     const hasT2 = Object.values(docsT2).some(a => a.length > 0)
-    if (!hasT1 && !hasT2) { setError('Sube al menos un documento'); return }
+    const hasInmueble = Object.values(docsInmueble).some(a => a.length > 0)
+    if (!hasT1 && !hasT2 && !hasInmueble) { setError('Sube al menos un documento'); return }
 
     const MAX_PDF_MB = 4.3
-    const allFiles = [...Object.values(docsT1).flat(), ...Object.values(docsT2).flat()]
+    const allFiles = [...Object.values(docsT1).flat(), ...Object.values(docsT2).flat(), ...Object.values(docsInmueble).flat()]
     const tooBig = allFiles.filter(f => f.type === 'application/pdf' && f.size > MAX_PDF_MB * 1024 * 1024)
     if (tooBig.length > 0) {
       const lines = tooBig.map(f => `· "${f.name}" (${(f.size / 1024 / 1024).toFixed(1)} MB)`)
@@ -344,6 +425,12 @@ export default function ExpedientePage() {
     try {
       if (hasT1) await uploadDocsSlotBySlot(folderId, clientName, docsT1)
       if (hasT2 && t2Name) await uploadDocsSlotBySlot(folderId, t2Name, docsT2)
+      // Inmueble docs always uploaded with T1's name
+      const c = compressImageFile
+      if (docsInmueble.notaSimple[0])
+        await uploadReturningSlot(folderId, clientName, { notaSimple: [await c(docsInmueble.notaSimple[0])] })
+      if (docsInmueble.arras[0])
+        await uploadReturningSlot(folderId, clientName, { arras: [await c(docsInmueble.arras[0])] })
       setTimeout(() => setPhase('done'), 800)
     } catch {
       setError('UPLOAD_ERROR')
@@ -442,15 +529,27 @@ export default function ExpedientePage() {
                 isOpen={openT2} onToggle={toggleT2}
                 collapsible={true} label={t2Name}
               />
+              <InmuebleDocSection
+                docs={docsInmueble} onFiles={handleInmuebleFiles}
+                existingFiles={existingFiles}
+                collapsible={true} isOpen={openInmueble} onToggle={toggleInmueble}
+              />
             </>
           ) : (
-            <DocSlots
-              tKey="t1" docs={docsT1} onFiles={handleFiles}
-              existingFiles={existingFiles}
-              tipoTrabajador={t1Type}
-              isOpen={true} onToggle={() => {}}
-              collapsible={false} label={clientName}
-            />
+            <>
+              <DocSlots
+                tKey="t1" docs={docsT1} onFiles={handleFiles}
+                existingFiles={existingFiles}
+                tipoTrabajador={t1Type}
+                isOpen={true} onToggle={() => {}}
+                collapsible={false} label={clientName}
+              />
+              <InmuebleDocSection
+                docs={docsInmueble} onFiles={handleInmuebleFiles}
+                existingFiles={existingFiles}
+                collapsible={false} isOpen={true} onToggle={() => {}}
+              />
+            </>
           )}
 
           {error && error.startsWith('PDF_BIG:') ? (

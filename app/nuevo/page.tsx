@@ -420,8 +420,6 @@ function TitularDocSection({
       {tipoTrabajador === 'gibraltar' && slot('vidaLaboralGib', 'Vida laboral Gibraltar')}
       {tipoTrabajador !== 'autonomo' && slot('contrato', 'Contrato de trabajo')}
       {slot('bancarios', '3 meses movimientos banco', { multiple: true })}
-      {slot('notaSimple', 'Nota simple del inmueble')}
-      {slot('arras', 'Contrato de arras')}
       {slot('extra1', 'Documento adicional 1')}
       {slot('extra2', 'Documento adicional 2')}
       {slot('extra3', 'Documento adicional 3')}
@@ -467,6 +465,73 @@ function TitularDocSection({
   )
 }
 
+// ─── InmuebleDocSection (module level) ───────────────────────────────────────
+
+interface InmuebleDocs {
+  notaSimple: File[]
+  arras: File[]
+}
+
+interface InmuebleDocSectionProps {
+  docs: InmuebleDocs
+  onFiles: (field: keyof InmuebleDocs) => (files: File[]) => void
+  collapsible: boolean
+  isOpen: boolean
+  onToggle: () => void
+}
+
+function InmuebleDocSection({ docs, onFiles, collapsible, isOpen, onToggle }: InmuebleDocSectionProps) {
+  const content = (
+    <>
+      <FileUploadSlot
+        label="Nota simple del inmueble"
+        fieldName="inmueble_notaSimple"
+        files={docs.notaSimple}
+        onFiles={onFiles('notaSimple')}
+      />
+      <FileUploadSlot
+        label="Contrato de arras"
+        fieldName="inmueble_arras"
+        files={docs.arras}
+        onFiles={onFiles('arras')}
+      />
+    </>
+  )
+
+  if (!collapsible) return <div>{content}</div>
+
+  return (
+    <div className="mb-4 border border-gray-200 rounded-2xl overflow-hidden bg-white">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-gray-50 transition-colors"
+      >
+        <div className="flex items-center gap-3 text-left">
+          <span className="w-7 h-7 rounded-full bg-[#ffbeb8] text-[#0f3693] text-sm flex items-center justify-center flex-shrink-0">
+            🏠
+          </span>
+          <div>
+            <p className="text-sm font-semibold text-[#0f3693]">Inmueble</p>
+            <p className="text-xs text-gray-400">Documentos compartidos del inmueble</p>
+          </div>
+        </div>
+        <svg
+          className={`w-5 h-5 text-gray-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {isOpen && (
+        <div className="px-3 pb-3 pt-2 border-t border-gray-100">
+          {content}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Page component ────────────────────────────────────────────────────────────
 
 export default function NuevoPage() {
@@ -477,7 +542,8 @@ export default function NuevoPage() {
     tipoVia: 'C/', calle: '', area: '', precioCompra: '', entradaArras: '',
   })
   const [docs, setDocs] = useState<AllDocs>(emptyAllDocs())
-  const [openSections, setOpenSections] = useState({ t1: true, t2: false })
+  const [inmuebleDocs, setInmuebleDocs] = useState<InmuebleDocs>({ notaSimple: [], arras: [] })
+  const [openSections, setOpenSections] = useState({ t1: true, t2: false, inmueble: false })
   const [error, setError] = useState<string | null>(null)
   const [clienteDni, setClienteDni] = useState('')
 
@@ -512,9 +578,17 @@ export default function NuevoPage() {
     [],
   )
 
+  // ── Inmueble doc handler ───────────────────────────────────────────────────
+  const handleInmuebleFiles = useCallback(
+    (field: keyof InmuebleDocs) => (files: File[]) =>
+      setInmuebleDocs(prev => ({ ...prev, [field]: files })),
+    [],
+  )
+
   // ── Section toggle handlers (stable) ──────────────────────────────────────
   const toggleT1 = useCallback(() => setOpenSections(prev => ({ ...prev, t1: !prev.t1 })), [])
   const toggleT2 = useCallback(() => setOpenSections(prev => ({ ...prev, t2: !prev.t2 })), [])
+  const toggleInmueble = useCallback(() => setOpenSections(prev => ({ ...prev, inmueble: !prev.inmueble })), [])
 
   // ── Validation ─────────────────────────────────────────────────────────────
   const validateStep1 = () => {
@@ -566,6 +640,7 @@ export default function NuevoPage() {
     const labeledFiles = [
       ...Object.values(docs.t1).flat().map(f => ({ file: f, titular: titulares[0].nombre || 'Titular 1' })),
       ...Object.values(docs.t2).flat().map(f => ({ file: f, titular: titulares[1]?.nombre || 'Titular 2' })),
+      ...Object.values(inmuebleDocs).flat().map(f => ({ file: f, titular: 'Inmueble' })),
     ]
     const tooBig = labeledFiles.filter(
       ({ file: f }) => f.type === 'application/pdf' && f.size > MAX_PDF_MB * 1024 * 1024,
@@ -597,6 +672,14 @@ export default function NuevoPage() {
       // ── Paso 2: subir docs slot por slot, un slot = una llamada ───────────
       await uploadTitularSlots(folderId, titulares[0], docs.t1)
       if (titulares.length > 1) await uploadTitularSlots(folderId, titulares[1], docs.t2)
+
+      // Inmueble docs — always uploaded with T1's name
+      const t1Name = `${titulares[0].nombre} ${titulares[0].apellido1}`
+      const c = compressImageFile
+      if (inmuebleDocs.notaSimple[0])
+        await uploadReturningSlot(folderId, t1Name, { notaSimple: [await c(inmuebleDocs.notaSimple[0])] })
+      if (inmuebleDocs.arras[0])
+        await uploadReturningSlot(folderId, t1Name, { arras: [await c(inmuebleDocs.arras[0])] })
 
       const dni = titulares[0].dni
       localStorage.setItem('zen_client', JSON.stringify({
@@ -826,17 +909,33 @@ export default function NuevoPage() {
                   onToggle={toggleT2}
                   collapsible={true}
                 />
+                <InmuebleDocSection
+                  docs={inmuebleDocs}
+                  onFiles={handleInmuebleFiles}
+                  collapsible={true}
+                  isOpen={openSections.inmueble}
+                  onToggle={toggleInmueble}
+                />
               </>
             ) : (
-              <TitularDocSection
-                titularKey="t1"
-                titular={titulares[0]}
-                docs={docs.t1}
-                handleDocFiles={handleDocFiles}
-                isOpen={true}
-                onToggle={() => {}}
-                collapsible={false}
-              />
+              <>
+                <TitularDocSection
+                  titularKey="t1"
+                  titular={titulares[0]}
+                  docs={docs.t1}
+                  handleDocFiles={handleDocFiles}
+                  isOpen={true}
+                  onToggle={() => {}}
+                  collapsible={false}
+                />
+                <InmuebleDocSection
+                  docs={inmuebleDocs}
+                  onFiles={handleInmuebleFiles}
+                  collapsible={false}
+                  isOpen={true}
+                  onToggle={() => {}}
+                />
+              </>
             )}
           </div>
         )}
