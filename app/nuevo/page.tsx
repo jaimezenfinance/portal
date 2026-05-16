@@ -569,6 +569,8 @@ export default function NuevoPage() {
         t2Name: titulares.length > 1
           ? `${titulares[1].nombre} ${titulares[1].apellido1}`
           : undefined,
+        t1Type: titulares[0].tipoTrabajador,
+        t2Type: titulares.length > 1 ? titulares[1].tipoTrabajador : undefined,
       }))
       setClienteDni(dni)
       setTimeout(() => setStep(5), 800)
@@ -599,9 +601,16 @@ export default function NuevoPage() {
             <p>Muchas gracias por enviarnos tu documentación.</p>
             <p>Tu asesor se pondrá en contacto contigo en breve.</p>
           </div>
-          <div className="bg-blue-50 border border-[#0f3693]/20 rounded-2xl p-4 mb-8">
+          <div className="bg-blue-50 border border-[#0f3693]/20 rounded-2xl p-4 mb-4">
             <p className="text-xs text-gray-500 mb-1">Número de referencia</p>
             <p className="text-lg font-bold text-[#0f3693]">{clienteDni}</p>
+          </div>
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mb-8 max-w-xs text-left">
+            <p className="text-xs font-semibold text-amber-800 mb-1">¿Necesitas añadir más documentos?</p>
+            <p className="text-xs text-amber-700">
+              Accede a <span className="font-semibold">Ya tengo expediente</span> e introduce el DNI del Titular 1:{' '}
+              <span className="font-bold">{clienteDni}</span>
+            </p>
           </div>
           <a href="/" className="inline-block bg-[#0f3693] text-white rounded-xl px-6 py-3 font-medium hover:bg-blue-800 transition-colors">
             Volver al inicio

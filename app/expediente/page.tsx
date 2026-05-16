@@ -7,11 +7,20 @@ import { compressImageFile, compressFiles } from '@/lib/compressImage'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+type TipoTrabajador = 'espana' | 'gibraltar' | 'autonomo'
+
 interface Docs {
   dni: File[]
   nominas: File[]
   renta: File[]
   vidaLaboral: File[]
+  vidaLaboralGib: File[]
+  p7: File[]
+  recibosAutonomo: File[]
+  recibosSS: File[]
+  mod131: File[]
+  mod303: File[]
+  mod390: File[]
   contrato: File[]
   notaSimple: File[]
   arras: File[]
@@ -22,14 +31,20 @@ interface Docs {
 }
 
 const emptyDocs = (): Docs => ({
-  dni: [], nominas: [], renta: [], vidaLaboral: [], contrato: [],
-  notaSimple: [], arras: [], bancarios: [], extra1: [], extra2: [], extra3: [],
+  dni: [], nominas: [], renta: [],
+  vidaLaboral: [], vidaLaboralGib: [], p7: [],
+  recibosAutonomo: [], recibosSS: [], mod131: [], mod303: [], mod390: [],
+  contrato: [], notaSimple: [], arras: [], bancarios: [],
+  extra1: [], extra2: [], extra3: [],
 })
 
 const DOC_PREFIXES: Record<keyof Docs, string> = {
   dni: 'DNI_', nominas: 'NOMINA_', renta: 'RENTA_',
-  vidaLaboral: 'VIDALABORAL_', contrato: 'CONTRATO_',
-  notaSimple: 'NOTASIMPLE_', arras: 'ARRAS_', bancarios: 'BANCARIOS_',
+  vidaLaboral: 'VIDALABORAL_', vidaLaboralGib: 'VIDALABORALGIB_', p7: 'P7_',
+  recibosAutonomo: 'RECIBOSAUTONOMO_', recibosSS: 'RECIBOSSS_',
+  mod131: 'MOD131_', mod303: 'MOD303_', mod390: 'MOD390_',
+  contrato: 'CONTRATO_', notaSimple: 'NOTASIMPLE_',
+  arras: 'ARRAS_', bancarios: 'BANCARIOS_',
   extra1: 'EXTRA1_', extra2: 'EXTRA2_', extra3: 'EXTRA3_',
 }
 
@@ -70,16 +85,37 @@ async function uploadDocsSlotBySlot(folderId: string, clientName: string, d: Doc
     if (d.dni[1]) fields.dniBack = [await c(d.dni[1])]
     await uploadReturningSlot(folderId, clientName, fields)
   }
-  if (d.renta[0])      await uploadReturningSlot(folderId, clientName, { renta: [await c(d.renta[0])] })
-  if (d.vidaLaboral[0]) await uploadReturningSlot(folderId, clientName, { vidaLaboral: [await c(d.vidaLaboral[0])] })
-  if (d.contrato[0])   await uploadReturningSlot(folderId, clientName, { contrato: [await c(d.contrato[0])] })
-  if (d.notaSimple[0]) await uploadReturningSlot(folderId, clientName, { notaSimple: [await c(d.notaSimple[0])] })
-  if (d.arras[0])      await uploadReturningSlot(folderId, clientName, { arras: [await c(d.arras[0])] })
-  if (d.extra1[0])     await uploadReturningSlot(folderId, clientName, { extra1: [await c(d.extra1[0])] })
-  if (d.extra2[0])     await uploadReturningSlot(folderId, clientName, { extra2: [await c(d.extra2[0])] })
-  if (d.extra3[0])     await uploadReturningSlot(folderId, clientName, { extra3: [await c(d.extra3[0])] })
-  if (d.nominas.length)  await uploadReturningSlot(folderId, clientName, { nominas: await cs(d.nominas) })
-  if (d.bancarios.length) await uploadReturningSlot(folderId, clientName, { bancarios: await cs(d.bancarios) })
+
+  const singleSlots: [string, File[]][] = [
+    ['renta',          d.renta],
+    ['vidaLaboral',    d.vidaLaboral],
+    ['vidaLaboralGib', d.vidaLaboralGib],
+    ['p7',             d.p7],
+    ['mod390',         d.mod390],
+    ['contrato',       d.contrato],
+    ['notaSimple',     d.notaSimple],
+    ['arras',          d.arras],
+    ['extra1',         d.extra1],
+    ['extra2',         d.extra2],
+    ['extra3',         d.extra3],
+  ]
+  for (const [field, files] of singleSlots) {
+    if (files.length === 0) continue
+    await uploadReturningSlot(folderId, clientName, { [field]: [await c(files[0])] })
+  }
+
+  const multiSlots: [string, File[]][] = [
+    ['nominas',         d.nominas],
+    ['bancarios',       d.bancarios],
+    ['recibosAutonomo', d.recibosAutonomo],
+    ['recibosSS',       d.recibosSS],
+    ['mod131',          d.mod131],
+    ['mod303',          d.mod303],
+  ]
+  for (const [field, files] of multiSlots) {
+    if (files.length === 0) continue
+    await uploadReturningSlot(folderId, clientName, { [field]: await cs(files) })
+  }
 }
 
 // ─── DocSlots (module level) ──────────────────────────────────────────────────
@@ -89,13 +125,17 @@ interface DocSlotsProps {
   docs: Docs
   onFiles: (tKey: 't1' | 't2', field: keyof Docs) => (files: File[]) => void
   existingFiles: string[]
+  tipoTrabajador: TipoTrabajador
   isOpen: boolean
   onToggle: () => void
   collapsible: boolean
   label: string
 }
 
-function DocSlots({ tKey, docs, onFiles, existingFiles, isOpen, onToggle, collapsible, label }: DocSlotsProps) {
+function DocSlots({
+  tKey, docs, onFiles, existingFiles, tipoTrabajador,
+  isOpen, onToggle, collapsible, label,
+}: DocSlotsProps) {
   const slot = (field: keyof Docs, slotLabel: string, opts?: { multiple?: boolean }) => {
     const alreadyUploaded = existingFiles.length > 0 && hasPrefix(existingFiles, DOC_PREFIXES[field])
     return (
@@ -114,10 +154,32 @@ function DocSlots({ tKey, docs, onFiles, existingFiles, isOpen, onToggle, collap
   const content = (
     <>
       {slot('dni', 'DNI/NIE (parte delantera y trasera)', { multiple: true })}
-      {slot('nominas', 'Últimas 3 nóminas', { multiple: true })}
+
+      {/* Nóminas — solo España y Gibraltar */}
+      {tipoTrabajador !== 'autonomo' && slot('nominas', 'Últimas 3 nóminas', { multiple: true })}
+
       {slot('renta', 'Declaración de la renta')}
-      {slot('vidaLaboral', 'Vida laboral')}
-      {slot('contrato', 'Contrato de trabajo')}
+
+      {/* P7 — solo Gibraltar */}
+      {tipoTrabajador === 'gibraltar' && slot('p7', 'P7')}
+
+      {/* Autónomo */}
+      {tipoTrabajador === 'autonomo' && (
+        <>
+          {slot('recibosAutonomo', '3 últimos recibos cuota autónomo', { multiple: true })}
+          {slot('recibosSS', 'Recibos pago seg. social', { multiple: true })}
+          {slot('mod131', 'Mod 131 IRPF trimestral', { multiple: true })}
+          {slot('mod303', 'Modelo 303 IVA trimestral', { multiple: true })}
+          {slot('mod390', 'Mod 390 IVA (si aplica)')}
+        </>
+      )}
+
+      {slot('vidaLaboral', tipoTrabajador === 'gibraltar' ? 'Vida laboral España' : 'Vida laboral')}
+      {tipoTrabajador === 'gibraltar' && slot('vidaLaboralGib', 'Vida laboral Gibraltar')}
+
+      {/* Contrato — solo España y Gibraltar */}
+      {tipoTrabajador !== 'autonomo' && slot('contrato', 'Contrato de trabajo')}
+
       {slot('bancarios', '3 meses movimientos banco', { multiple: true })}
       {slot('notaSimple', 'Nota simple del inmueble')}
       {slot('arras', 'Contrato de arras')}
@@ -169,6 +231,8 @@ export default function ExpedientePage() {
   const [folderId, setFolderId] = useState('')
   const [clientName, setClientName] = useState('')
   const [t2Name, setT2Name] = useState('')
+  const [t1Type, setT1Type] = useState<TipoTrabajador>('espana')
+  const [t2Type, setT2Type] = useState<TipoTrabajador>('espana')
   const [docsT1, setDocsT1] = useState<Docs>(emptyDocs())
   const [docsT2, setDocsT2] = useState<Docs>(emptyDocs())
   const [existingFiles, setExistingFiles] = useState<string[]>([])
@@ -207,6 +271,8 @@ export default function ExpedientePage() {
         setFolderId(data.folderId)
         setClientName(data.name)
         if (data.t2Name) setT2Name(data.t2Name)
+        if (data.t1Type) setT1Type(data.t1Type as TipoTrabajador)
+        if (data.t2Type) setT2Type(data.t2Type as TipoTrabajador)
         fetchExistingFiles(data.folderId)
         setPhase('upload')
         return
@@ -220,6 +286,7 @@ export default function ExpedientePage() {
       setFolderId(data.folderId)
       setClientName(data.name)
       if (data.t2Name) setT2Name(data.t2Name)
+      // tipoTrabajador not stored in Notion — default to 'espana' (all fields visible)
       fetchExistingFiles(data.folderId)
       setPhase('upload')
     } catch (e: any) {
@@ -334,12 +401,14 @@ export default function ExpedientePage() {
               <DocSlots
                 tKey="t1" docs={docsT1} onFiles={handleFiles}
                 existingFiles={existingFiles}
+                tipoTrabajador={t1Type}
                 isOpen={openT1} onToggle={toggleT1}
                 collapsible={true} label={clientName}
               />
               <DocSlots
                 tKey="t2" docs={docsT2} onFiles={handleFiles}
                 existingFiles={[]}
+                tipoTrabajador={t2Type}
                 isOpen={openT2} onToggle={toggleT2}
                 collapsible={true} label={t2Name}
               />
@@ -348,6 +417,7 @@ export default function ExpedientePage() {
             <DocSlots
               tKey="t1" docs={docsT1} onFiles={handleFiles}
               existingFiles={existingFiles}
+              tipoTrabajador={t1Type}
               isOpen={true} onToggle={() => {}}
               collapsible={false} label={clientName}
             />
