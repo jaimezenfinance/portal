@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import Header from '@/components/Header'
 import Stepper from '@/components/Stepper'
 import FileUploadSlot from '@/components/FileUploadSlot'
@@ -546,6 +546,14 @@ export default function NuevoPage() {
   const [openSections, setOpenSections] = useState({ t1: true, t2: false, inmueble: false })
   const [error, setError] = useState<string | null>(null)
   const [clienteDni, setClienteDni] = useState('')
+  const errorRef = useRef<HTMLDivElement>(null)
+
+  // Scroll to error automatically when it appears on step 3
+  useEffect(() => {
+    if (error && step === 3) {
+      setTimeout(() => errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)
+    }
+  }, [error, step])
 
   // ── Titular handlers ───────────────────────────────────────────────────────
   const handleTitularChange = useCallback((index: number, field: keyof Titular, value: string) => {
@@ -942,7 +950,7 @@ export default function NuevoPage() {
 
         {/* Error message */}
         {error && error.startsWith('PDF_BIG:') ? (
-          <div className="mt-4 bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-left">
+          <div ref={errorRef} className="mt-4 bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-left">
             <p className="font-semibold text-red-700 mb-2">📄 Algunos archivos son demasiado grandes</p>
             <div className="text-red-600 mb-3 space-y-0.5">
               {error.replace('PDF_BIG:', '').split('\n').map((line, i) => (
@@ -957,7 +965,7 @@ export default function NuevoPage() {
             </p>
           </div>
         ) : error ? (
-          <div className="mt-4 bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm">
+          <div ref={errorRef} className="mt-4 bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm">
             {error}
           </div>
         ) : null}
