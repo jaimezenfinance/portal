@@ -561,7 +561,7 @@ export default function ExpedientePage() {
               <InmuebleDocSection
                 docs={docsInmueble} onFiles={handleInmuebleFiles}
                 existingFiles={existingT1}
-                collapsible={false} isOpen={true} onToggle={() => {}}
+                collapsible={true} isOpen={openInmueble} onToggle={toggleInmueble}
               />
             </>
           )}

@@ -939,9 +939,9 @@ export default function NuevoPage() {
                 <InmuebleDocSection
                   docs={inmuebleDocs}
                   onFiles={handleInmuebleFiles}
-                  collapsible={false}
-                  isOpen={true}
-                  onToggle={() => {}}
+                  collapsible={true}
+                  isOpen={openSections.inmueble}
+                  onToggle={toggleInmueble}
                 />
               </>
             )}
@@ -972,7 +972,7 @@ export default function NuevoPage() {
       </div>
 
       {/* Fixed bottom nav */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-3 safe-area-pb">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 px-4 py-3 safe-area-pb">
         <div className="max-w-lg mx-auto flex gap-3">
           {step > 1 && (
             <button
