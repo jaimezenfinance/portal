@@ -459,7 +459,7 @@ function TitularDocSection({
             value={extraLabels[field]}
             onChange={e => onExtraLabel(field, e.target.value)}
             placeholder="Ej: certificados, extractos, contratos..."
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-[#0f3693] bg-white"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-[#0f3693] bg-white placeholder:text-gray-300 placeholder:font-light"
           />
           <FileUploadSlot
             label=""
