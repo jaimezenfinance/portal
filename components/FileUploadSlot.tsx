@@ -30,13 +30,15 @@ export default function FileUploadSlot({ label, fieldName, required, multiple, f
 
   return (
     <div className="mb-4">
-      <div className="flex items-center gap-2 mb-1">
-        <span className={`text-sm font-medium ${isDone ? 'line-through text-gray-400' : 'text-gray-700'}`}>{label}</span>
-        {required && <span className="text-red-500 text-xs">*</span>}
-        {alreadyUploaded && files.length === 0 && (
-          <span className="text-xs bg-green-100 text-green-700 rounded-full px-2 py-0.5 font-medium">✓ Subido</span>
-        )}
-      </div>
+      {label && (
+        <div className="flex items-center gap-2 mb-1">
+          <span className={`text-sm font-medium ${isDone ? 'line-through text-gray-400' : 'text-gray-700'}`}>{label}</span>
+          {required && <span className="text-red-500 text-xs">*</span>}
+          {alreadyUploaded && files.length === 0 && (
+            <span className="text-xs bg-green-100 text-green-700 rounded-full px-2 py-0.5 font-medium">✓ Subido</span>
+          )}
+        </div>
+      )}
       <button
         type="button"
         onClick={() => inputRef.current?.click()}

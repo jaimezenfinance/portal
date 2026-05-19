@@ -142,7 +142,20 @@ export async function POST(request: NextRequest) {
       for (const field of OTHER_DOC_FIELDS) {
         const files = (formData.getAll(field) as File[]).filter(f => f && f.size > 0)
         if (files.length === 0) continue
-        const prefix = getDocPrefix(field)
+        // For extra slots, use custom label from client if provided
+        let prefix = getDocPrefix(field)
+        if (field === 'extra1' || field === 'extra2' || field === 'extra3') {
+          const rawLabel = (formData.get(`${field}Label`) as string | null) || ''
+          if (rawLabel.trim()) {
+            prefix = rawLabel.trim()
+              .normalize('NFD').replace(/[̀-ͯ]/g, '') // strip accents
+              .toUpperCase()
+              .replace(/[^A-Z0-9]/g, '_')
+              .replace(/_+/g, '_')
+              .replace(/^_|_$/g, '')
+              || prefix
+          }
+        }
         if (files.length === 1) {
           const f = files[0]
           let buf: Buffer = Buffer.from(await f.arrayBuffer())

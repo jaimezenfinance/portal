@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mockup – Documento adicional</title>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { font-family: 'Prompt', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #f8f9fc; display: flex; justify-content: center; padding: 40px 16px; }
+
+    .card { background: white; border-radius: 16px; padding: 20px 16px; width: 100%; max-width: 420px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+    /* Standard doc slot (simplified) */
+    .std-slot { margin-bottom: 16px; }
+    .std-label { font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 6px; }
+    .upload-btn {
+      width: 100%;
+      border: 2px dashed #ffbeb8;
+      border-radius: 12px;
+      padding: 16px 12px;
+      text-align: center;
+      font-size: 14px;
+      color: #6b7280;
+      background: white;
+    }
+
+    /* Separator */
+    .separator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    .sep-line { flex: 1; height: 1px; background: #e5e7eb; }
+    .sep-label { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+
+    /* Extra slot */
+    .extra-slot { margin-bottom: 16px; }
+
+    .extra-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 4px;
+    }
+    .extra-question {
+      font-size: 11px;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+    .extra-input {
+      width: 100%;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-family: 'Prompt', sans-serif;
+      color: #111827;
+      background: white;
+      margin-bottom: 8px;
+      outline: none;
+    }
+    .extra-input::placeholder { color: #d1d5db; }
+    .extra-input:focus { border-color: #0f3693; }
+  </style>
+</head>
+<body>
+  <div style="width:100%;max-width:420px;">
+    <div class="card">
+
+      <!-- Standard doc (example) -->
+      <div class="std-slot">
+        <p class="std-label">3 meses movimientos banco</p>
+        <div class="upload-btn">📎 Pincha para subir (puedes seleccionar varios a la vez)</div>
+      </div>
+
+      <!-- Separator -->
+      <div class="separator">
+        <div class="sep-line"></div>
+        <span class="sep-label">Documentos adicionales</span>
+        <div class="sep-line"></div>
+      </div>
+
+      <!-- Extra 1 -->
+      <div class="extra-slot">
+        <p class="extra-title">Documento adicional 1</p>
+        <p class="extra-question">¿Qué documento es?</p>
+        <input class="extra-input" type="text" placeholder="Ej: certificados, extractos, contratos..." />
+        <div class="upload-btn">📎 Pincha para subir</div>
+      </div>
+
+      <!-- Extra 2 -->
+      <div class="extra-slot">
+        <p class="extra-title">Documento adicional 2</p>
+        <p class="extra-question">¿Qué documento es?</p>
+        <input class="extra-input" type="text" placeholder="Ej: certificados, extractos, contratos..." />
+        <div class="upload-btn">📎 Pincha para subir</div>
+      </div>
+
+      <!-- Extra 3 -->
+      <div class="extra-slot">
+        <p class="extra-title">Documento adicional 3</p>
+        <p class="extra-question">¿Qué documento es?</p>
+        <input class="extra-input" type="text" placeholder="Ej: certificados, extractos, contratos..." />
+        <div class="upload-btn">📎 Pincha para subir</div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

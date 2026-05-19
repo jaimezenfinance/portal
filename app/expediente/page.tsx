@@ -36,6 +36,14 @@ function WaButtons() {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+interface ExtraLabels {
+  extra1: string
+  extra2: string
+  extra3: string
+}
+
+const emptyExtraLabels = (): ExtraLabels => ({ extra1: '', extra2: '', extra3: '' })
+
 type TipoTrabajador = 'espana' | 'gibraltar' | 'autonomo'
 
 interface Docs {
@@ -87,6 +95,7 @@ async function uploadReturningSlot(
   folderId: string,
   clientName: string,
   fields: Record<string, File[]>,
+  labels?: Record<string, string>,
 ): Promise<void> {
   const fd = new FormData()
   fd.append('mode', 'returning')
@@ -94,6 +103,11 @@ async function uploadReturningSlot(
   fd.append('clientName', clientName)
   for (const [name, files] of Object.entries(fields)) {
     for (const f of files) fd.append(name, f)
+  }
+  if (labels) {
+    for (const [name, val] of Object.entries(labels)) {
+      if (val) fd.append(name, val)
+    }
   }
   const res = await fetch('/api/upload', { method: 'POST', body: fd })
   if (!res.ok) {
@@ -105,7 +119,7 @@ async function uploadReturningSlot(
   }
 }
 
-async function uploadDocsSlotBySlot(folderId: string, clientName: string, d: Docs) {
+async function uploadDocsSlotBySlot(folderId: string, clientName: string, d: Docs, extraLabels?: { extra1: string; extra2: string; extra3: string }) {
   const c = compressImageFile
   const cs = compressFiles
 
@@ -124,13 +138,17 @@ async function uploadDocsSlotBySlot(folderId: string, clientName: string, d: Doc
     ['contrato',       d.contrato],
     ['notaSimple',     d.notaSimple],
     ['arras',          d.arras],
-    ['extra1',         d.extra1],
-    ['extra2',         d.extra2],
-    ['extra3',         d.extra3],
   ]
   for (const [field, files] of singleSlots) {
     if (files.length === 0) continue
     await uploadReturningSlot(folderId, clientName, { [field]: [await c(files[0])] })
+  }
+
+  // Extra slots with optional custom label
+  for (const field of ['extra1', 'extra2', 'extra3'] as const) {
+    if (d[field].length === 0) continue
+    const label = extraLabels?.[field] || ''
+    await uploadReturningSlot(folderId, clientName, { [field]: [await c(d[field][0])] }, label ? { [`${field}Label`]: label } : undefined)
   }
 
   const multiSlots: [string, File[]][] = [
@@ -159,11 +177,13 @@ interface DocSlotsProps {
   onToggle: () => void
   collapsible: boolean
   label: string
+  extraLabels: ExtraLabels
+  onExtraLabel: (field: keyof ExtraLabels, value: string) => void
 }
 
 function DocSlots({
   tKey, docs, onFiles, existingFiles, tipoTrabajador,
-  isOpen, onToggle, collapsible, label,
+  isOpen, onToggle, collapsible, label, extraLabels, onExtraLabel,
 }: DocSlotsProps) {
   const slot = (field: keyof Docs, slotLabel: string, opts?: { multiple?: boolean }) => {
     const alreadyUploaded = existingFiles.length > 0 && hasPrefix(existingFiles, DOC_PREFIXES[field])
@@ -210,9 +230,39 @@ function DocSlots({
       {tipoTrabajador !== 'autonomo' && slot('contrato', 'Contrato de trabajo')}
 
       {slot('bancarios', '3 meses movimientos banco', { multiple: true })}
-      {slot('extra1', 'Documento adicional 1')}
-      {slot('extra2', 'Documento adicional 2')}
-      {slot('extra3', 'Documento adicional 3')}
+
+      {/* ── Separador documentos adicionales ── */}
+      <div className="flex items-center gap-3 my-4">
+        <div className="flex-1 h-px bg-gray-100" />
+        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Documentos adicionales</span>
+        <div className="flex-1 h-px bg-gray-100" />
+      </div>
+
+      {(['extra1', 'extra2', 'extra3'] as const).map((field, i) => {
+        const alreadyUploaded = existingFiles.length > 0 && hasPrefix(existingFiles, DOC_PREFIXES[field])
+        return (
+          <div key={field} className="mb-4">
+            <span className={`text-sm font-medium block mb-1 ${docs[field].length > 0 || alreadyUploaded ? 'line-through text-gray-400' : 'text-gray-700'}`}>
+              Documento adicional {i + 1}
+            </span>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">¿Qué documento es?</p>
+            <input
+              type="text"
+              value={extraLabels[field]}
+              onChange={e => onExtraLabel(field, e.target.value)}
+              placeholder="Ej: certificados, extractos, contratos..."
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-[#0f3693] bg-white"
+            />
+            <FileUploadSlot
+              label=""
+              fieldName={`${tKey}_${field}`}
+              files={docs[field]}
+              onFiles={onFiles(tKey, field)}
+              alreadyUploaded={alreadyUploaded}
+            />
+          </div>
+        )
+      })}
     </>
   )
 
@@ -335,6 +385,8 @@ export default function ExpedientePage() {
   const [t2Type, setT2Type] = useState<TipoTrabajador>('espana')
   const [docsT1, setDocsT1] = useState<Docs>(emptyDocs())
   const [docsT2, setDocsT2] = useState<Docs>(emptyDocs())
+  const [extraLabelsT1, setExtraLabelsT1] = useState<ExtraLabels>(emptyExtraLabels())
+  const [extraLabelsT2, setExtraLabelsT2] = useState<ExtraLabels>(emptyExtraLabels())
   const [docsInmueble, setDocsInmueble] = useState<InmuebleDocs>({ notaSimple: [], arras: [] })
   const [existingFiles, setExistingFiles] = useState<string[]>([])
   const [openT1, setOpenT1] = useState(true)
@@ -353,6 +405,11 @@ export default function ExpedientePage() {
   const toggleT1 = useCallback(() => setOpenT1(v => !v), [])
   const toggleT2 = useCallback(() => setOpenT2(v => !v), [])
   const toggleInmueble = useCallback(() => setOpenInmueble(v => !v), [])
+
+  const handleExtraLabelT1 = useCallback((field: keyof ExtraLabels, value: string) =>
+    setExtraLabelsT1(prev => ({ ...prev, [field]: value })), [])
+  const handleExtraLabelT2 = useCallback((field: keyof ExtraLabels, value: string) =>
+    setExtraLabelsT2(prev => ({ ...prev, [field]: value })), [])
 
   const handleInmuebleFiles = useCallback(
     (field: keyof InmuebleDocs) => (files: File[]) =>
@@ -431,8 +488,8 @@ export default function ExpedientePage() {
     setPhase('processing')
 
     try {
-      if (hasT1) await uploadDocsSlotBySlot(folderId, clientName, docsT1)
-      if (hasT2 && t2Name) await uploadDocsSlotBySlot(folderId, t2Name, docsT2)
+      if (hasT1) await uploadDocsSlotBySlot(folderId, clientName, docsT1, extraLabelsT1)
+      if (hasT2 && t2Name) await uploadDocsSlotBySlot(folderId, t2Name, docsT2, extraLabelsT2)
       // Inmueble docs always uploaded with T1's name
       const c = compressImageFile
       if (docsInmueble.notaSimple[0])
@@ -535,6 +592,7 @@ export default function ExpedientePage() {
                 tipoTrabajador={t1Type}
                 isOpen={openT1} onToggle={toggleT1}
                 collapsible={true} label={clientName}
+                extraLabels={extraLabelsT1} onExtraLabel={handleExtraLabelT1}
               />
               <DocSlots
                 tKey="t2" docs={docsT2} onFiles={handleFiles}
@@ -542,6 +600,7 @@ export default function ExpedientePage() {
                 tipoTrabajador={t2Type}
                 isOpen={openT2} onToggle={toggleT2}
                 collapsible={true} label={t2Name}
+                extraLabels={extraLabelsT2} onExtraLabel={handleExtraLabelT2}
               />
               <InmuebleDocSection
                 docs={docsInmueble} onFiles={handleInmuebleFiles}
@@ -557,6 +616,7 @@ export default function ExpedientePage() {
                 tipoTrabajador={t1Type}
                 isOpen={true} onToggle={() => {}}
                 collapsible={false} label={clientName}
+                extraLabels={extraLabelsT1} onExtraLabel={handleExtraLabelT1}
               />
               <InmuebleDocSection
                 docs={docsInmueble} onFiles={handleInmuebleFiles}

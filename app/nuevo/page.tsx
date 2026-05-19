@@ -54,6 +54,14 @@ interface AllDocs {
   t2: TitularDocs
 }
 
+interface ExtraLabels {
+  extra1: string
+  extra2: string
+  extra3: string
+}
+
+const emptyExtraLabels = (): ExtraLabels => ({ extra1: '', extra2: '', extra3: '' })
+
 const emptyTitular = (): Titular => ({
   tipoTrabajador: 'espana',
   nombre: '', apellido1: '', edad: '', dni: '', telefono: '', email: '',
@@ -92,6 +100,7 @@ async function uploadReturningSlot(
   folderId: string,
   clientName: string,
   fields: Record<string, File[]>,
+  labels?: Record<string, string>,
 ): Promise<void> {
   const fd = new FormData()
   fd.append('mode', 'returning')
@@ -99,6 +108,11 @@ async function uploadReturningSlot(
   fd.append('clientName', clientName)
   for (const [name, files] of Object.entries(fields)) {
     for (const f of files) fd.append(name, f)
+  }
+  if (labels) {
+    for (const [name, val] of Object.entries(labels)) {
+      if (val) fd.append(name, val)
+    }
   }
   const res = await fetch('/api/upload', { method: 'POST', body: fd })
   if (!res.ok) {
@@ -112,7 +126,7 @@ async function uploadReturningSlot(
   }
 }
 
-async function uploadTitularSlots(folderId: string, titular: Titular, d: TitularDocs) {
+async function uploadTitularSlots(folderId: string, titular: Titular, d: TitularDocs, extraLabels?: { extra1: string; extra2: string; extra3: string }) {
   const clientName = `${titular.nombre} ${titular.apellido1}`
   const c = compressImageFile
   const cs = compressFiles
@@ -134,13 +148,17 @@ async function uploadTitularSlots(folderId: string, titular: Titular, d: Titular
     ['arras',          d.arras],
     ['p7',             d.p7],
     ['mod390',         d.mod390],
-    ['extra1',         d.extra1],
-    ['extra2',         d.extra2],
-    ['extra3',         d.extra3],
   ]
   for (const [field, files] of singleSlots) {
     if (files.length === 0) continue
     await uploadReturningSlot(folderId, clientName, { [field]: [await c(files[0])] })
+  }
+
+  // Extra slots (with optional custom label → filename prefix)
+  for (const field of ['extra1', 'extra2', 'extra3'] as const) {
+    if (d[field].length === 0) continue
+    const label = extraLabels?.[field] || ''
+    await uploadReturningSlot(folderId, clientName, { [field]: [await c(d[field][0])] }, label ? { [`${field}Label`]: label } : undefined)
   }
 
   // Multi-file slots
@@ -379,11 +397,13 @@ interface TitularDocSectionProps {
   isOpen: boolean
   onToggle: () => void
   collapsible: boolean
+  extraLabels: ExtraLabels
+  onExtraLabel: (field: keyof ExtraLabels, value: string) => void
 }
 
 function TitularDocSection({
   titularKey, titular, docs, handleDocFiles,
-  isOpen, onToggle, collapsible,
+  isOpen, onToggle, collapsible, extraLabels, onExtraLabel,
 }: TitularDocSectionProps) {
   const { tipoTrabajador } = titular
   const fullName = [titular.nombre, titular.apellido1].filter(Boolean).join(' ') ||
@@ -420,9 +440,35 @@ function TitularDocSection({
       {tipoTrabajador === 'gibraltar' && slot('vidaLaboralGib', 'Vida laboral Gibraltar')}
       {tipoTrabajador !== 'autonomo' && slot('contrato', 'Contrato de trabajo')}
       {slot('bancarios', '3 meses movimientos banco', { multiple: true })}
-      {slot('extra1', 'Documento adicional 1')}
-      {slot('extra2', 'Documento adicional 2')}
-      {slot('extra3', 'Documento adicional 3')}
+
+      {/* ── Separador documentos adicionales ── */}
+      <div className="flex items-center gap-3 my-4">
+        <div className="flex-1 h-px bg-gray-100" />
+        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Documentos adicionales</span>
+        <div className="flex-1 h-px bg-gray-100" />
+      </div>
+
+      {(['extra1', 'extra2', 'extra3'] as const).map((field, i) => (
+        <div key={field} className="mb-4">
+          <span className={`text-sm font-medium block mb-1 ${docs[field].length > 0 ? 'line-through text-gray-400' : 'text-gray-700'}`}>
+            Documento adicional {i + 1}
+          </span>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">¿Qué documento es?</p>
+          <input
+            type="text"
+            value={extraLabels[field]}
+            onChange={e => onExtraLabel(field, e.target.value)}
+            placeholder="Ej: certificados, extractos, contratos..."
+            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-[#0f3693] bg-white"
+          />
+          <FileUploadSlot
+            label=""
+            fieldName={`${titularKey}_${field}`}
+            files={docs[field]}
+            onFiles={handleDocFiles(titularKey, field)}
+          />
+        </div>
+      ))}
     </>
   )
 
@@ -542,6 +588,7 @@ export default function NuevoPage() {
     tipoVia: 'C/', calle: '', area: '', precioCompra: '', entradaArras: '',
   })
   const [docs, setDocs] = useState<AllDocs>(emptyAllDocs())
+  const [extraLabels, setExtraLabels] = useState<{ t1: ExtraLabels; t2: ExtraLabels }>({ t1: emptyExtraLabels(), t2: emptyExtraLabels() })
   const [inmuebleDocs, setInmuebleDocs] = useState<InmuebleDocs>({ notaSimple: [], arras: [] })
   const [openSections, setOpenSections] = useState({ t1: true, t2: false, inmueble: true })
   const [error, setError] = useState<string | null>(null)
@@ -592,6 +639,15 @@ export default function NuevoPage() {
       setInmuebleDocs(prev => ({ ...prev, [field]: files })),
     [],
   )
+
+  // ── Extra label handler ────────────────────────────────────────────────────
+  const handleExtraLabel = useCallback(
+    (tKey: 't1' | 't2', field: keyof ExtraLabels, value: string) =>
+      setExtraLabels(prev => ({ ...prev, [tKey]: { ...prev[tKey], [field]: value } })),
+    [],
+  )
+  const handleExtraLabelT1 = useCallback((field: keyof ExtraLabels, value: string) => handleExtraLabel('t1', field, value), [handleExtraLabel])
+  const handleExtraLabelT2 = useCallback((field: keyof ExtraLabels, value: string) => handleExtraLabel('t2', field, value), [handleExtraLabel])
 
   // ── Section toggle handlers (stable) ──────────────────────────────────────
   const toggleT1 = useCallback(() => setOpenSections(prev => ({ ...prev, t1: !prev.t1 })), [])
@@ -678,8 +734,8 @@ export default function NuevoPage() {
       const { folderId } = await metaRes.json()
 
       // ── Paso 2: subir docs slot por slot, un slot = una llamada ───────────
-      await uploadTitularSlots(folderId, titulares[0], docs.t1)
-      if (titulares.length > 1) await uploadTitularSlots(folderId, titulares[1], docs.t2)
+      await uploadTitularSlots(folderId, titulares[0], docs.t1, extraLabels.t1)
+      if (titulares.length > 1) await uploadTitularSlots(folderId, titulares[1], docs.t2, extraLabels.t2)
 
       // Inmueble docs — always uploaded with T1's name
       const t1Name = `${titulares[0].nombre} ${titulares[0].apellido1}`
@@ -907,6 +963,8 @@ export default function NuevoPage() {
                   isOpen={openSections.t1}
                   onToggle={toggleT1}
                   collapsible={true}
+                  extraLabels={extraLabels.t1}
+                  onExtraLabel={handleExtraLabelT1}
                 />
                 <TitularDocSection
                   titularKey="t2"
@@ -916,6 +974,8 @@ export default function NuevoPage() {
                   isOpen={openSections.t2}
                   onToggle={toggleT2}
                   collapsible={true}
+                  extraLabels={extraLabels.t2}
+                  onExtraLabel={handleExtraLabelT2}
                 />
                 <InmuebleDocSection
                   docs={inmuebleDocs}
@@ -935,6 +995,8 @@ export default function NuevoPage() {
                   isOpen={true}
                   onToggle={() => {}}
                   collapsible={false}
+                  extraLabels={extraLabels.t1}
+                  onExtraLabel={handleExtraLabelT1}
                 />
                 <InmuebleDocSection
                   docs={inmuebleDocs}

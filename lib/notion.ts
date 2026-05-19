@@ -39,15 +39,6 @@ export async function createClientEntry(data: {
     Nombre: {
       title: [{ text: { content: data.name } }],
     },
-    DNI: {
-      rich_text: [{ text: { content: data.dni } }],
-    },
-    Teléfono: {
-      phone_number: data.telefono,
-    },
-    Email: {
-      email: data.email,
-    },
     Área: {
       select: { name: data.area },
     },
@@ -115,7 +106,7 @@ export async function findClientByDni(dni: string): Promise<{ name: string; fold
   const res = await notion.databases.query({
     database_id: databaseId,
     filter: {
-      property: 'DNI',
+      property: 'DNI #1',
       rich_text: { equals: dni },
     },
   })
