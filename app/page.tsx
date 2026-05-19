@@ -31,6 +31,19 @@ export default function Home() {
             </div>
           </Link>
         </div>
+        <div className="mt-6 border-t border-gray-200 pt-5 text-center">
+          <p className="text-xs text-gray-400 leading-relaxed">
+            🔒 La documentación que compartas se usará exclusivamente para gestionar tu expediente hipotecario.
+          </p>
+          <a
+            href="https://zenfinance.es/privacidad.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block mt-1.5 text-xs text-[#0f3693] underline font-medium"
+          >
+            Política de Privacidad
+          </a>
+        </div>
       </main>
     </div>
   )
