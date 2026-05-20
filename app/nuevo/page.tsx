@@ -396,21 +396,16 @@ interface TitularDocSectionProps {
   titular: Titular
   docs: TitularDocs
   handleDocFiles: (titularKey: 't1' | 't2', field: keyof TitularDocs) => (files: File[]) => void
-  isOpen: boolean
-  onToggle: () => void
   onContinue?: () => void
-  collapsible: boolean
-  extraLabels: ExtraLabels
-  onExtraLabel: (field: keyof ExtraLabels, value: string) => void
 }
 
 function TitularDocSection({
-  titularKey, titular, docs, handleDocFiles,
-  isOpen, onToggle, onContinue, collapsible, extraLabels, onExtraLabel,
+  titularKey, titular, docs, handleDocFiles, onContinue,
 }: TitularDocSectionProps) {
   const { tipoTrabajador } = titular
+  const num = titularKey === 't1' ? '1' : '2'
   const fullName = [titular.nombre, titular.apellido1].filter(Boolean).join(' ') ||
-    (titularKey === 't1' ? 'Titular 1' : 'Titular 2')
+    `Titular ${num}`
 
   const slot = (field: keyof TitularDocs, label: string, opts?: { multiple?: boolean; required?: boolean }) => (
     <FileUploadSlot
@@ -424,112 +419,66 @@ function TitularDocSection({
     />
   )
 
-  const content = (
-    <>
-      {slot('dni', 'DNI/NIE (parte delantera y trasera)', { multiple: true, required: titularKey === 't1' })}
-      {tipoTrabajador !== 'autonomo' && slot('nominas', 'Últimas 3 nóminas', { multiple: true })}
-      {slot('renta', 'Declaración de la renta')}
-      {tipoTrabajador === 'gibraltar' && slot('p7', 'P7')}
-      {tipoTrabajador === 'autonomo' && (
-        <>
-          {slot('recibosAutonomo', '3 últimos recibos cuota autónomo', { multiple: true })}
-          {slot('recibosSS', 'Recibos pago seg. social', { multiple: true })}
-          {slot('mod131', 'Mod 131 IRPF trimestral', { multiple: true })}
-          {slot('mod303', 'Modelo 303 IVA trimestral', { multiple: true })}
-          {slot('mod390', 'Mod 390 IVA (si aplica)')}
-        </>
-      )}
-      {slot('vidaLaboral', tipoTrabajador === 'gibraltar' ? 'Vida Laboral España' : 'Vida laboral')}
-      {tipoTrabajador === 'gibraltar' && slot('vidaLaboralGib', 'Vida laboral Gibraltar')}
-      {tipoTrabajador !== 'autonomo' && slot('contrato', 'Contrato de trabajo')}
-      {slot('bancarios', '3 meses movimientos banco', { multiple: true })}
-
-      {/* ── Separador documentos adicionales ── */}
-      <div className="flex items-center gap-3 my-4">
-        <div className="flex-1 h-px bg-gray-100" />
-        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Documentos adicionales</span>
-        <div className="flex-1 h-px bg-gray-100" />
-      </div>
-
-      {(['extra1', 'extra2', 'extra3'] as const).map((field, i) => (
-        <div key={field} className="mb-4">
-          <span className={`text-sm font-medium block mb-1 ${docs[field].length > 0 ? 'line-through text-gray-400' : 'text-gray-700'}`}>
-            Documento adicional {i + 1}
-          </span>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">¿Qué documento es?</p>
-          <input
-            type="text"
-            value={extraLabels[field]}
-            onChange={e => onExtraLabel(field, e.target.value)}
-            placeholder="Ej: certificados, extractos, contratos..."
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-[#0f3693] bg-white placeholder:text-gray-300 placeholder:font-light"
-          />
-          <FileUploadSlot
-            label=""
-            fieldName={`${titularKey}_${field}`}
-            files={docs[field]}
-            onFiles={handleDocFiles(titularKey, field)}
-          />
-        </div>
-      ))}
-    </>
-  )
-
-  if (!collapsible) {
-    return (
-      <div>
-        <div className="flex items-center gap-3 mb-4">
-          <span className="w-7 h-7 rounded-full bg-[#0f3693] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</span>
-          <div>
-            <p className="text-base font-semibold text-[#0f3693]">Documentación de {fullName}</p>
-            {tipoTrabajador && <p className="text-xs text-gray-400">{WORKER_LABEL[tipoTrabajador]}</p>}
-          </div>
-        </div>
-        {content}
-      </div>
-    )
-  }
-
   return (
-    <div className="mb-4 border border-gray-200 rounded-2xl overflow-hidden bg-white">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-gray-50 transition-colors"
-      >
-        <div className="flex items-center gap-3 text-left">
-          <span className="w-7 h-7 rounded-full bg-[#0f3693] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
-            {titularKey === 't1' ? '1' : '2'}
-          </span>
-          <div>
-            <p className="text-sm font-semibold text-[#0f3693]">{fullName}</p>
-            <p className="text-xs text-gray-400">
-              {WORKER_LABEL[tipoTrabajador]} · Toca para subir documentación
-            </p>
-          </div>
+    <div className="mb-4 rounded-2xl border-2 border-[#0f3693]/20 bg-white shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="bg-[#0f3693]/[0.06] px-4 py-3 border-b border-[#0f3693]/10">
+        <div className="flex items-center gap-2">
+          <span className="w-6 h-6 rounded-full bg-[#0f3693] text-white text-xs flex items-center justify-center font-bold shrink-0">{num}</span>
+          <h3 className="font-semibold text-[#0f3693] text-base">Documentación de {fullName}</h3>
         </div>
-        <svg
-          className={`w-5 h-5 text-gray-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
-          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
+        {tipoTrabajador && (
+          <p className="text-xs text-gray-500 mt-1 ml-8">📋 {WORKER_LABEL[tipoTrabajador]}</p>
+        )}
+      </div>
 
-      {isOpen && (
-        <div className="px-3 pb-3 pt-2 border-t border-gray-100">
-          {content}
-          {onContinue && (
-            <button
-              type="button"
-              onClick={onContinue}
-              className="w-full mt-4 py-3 rounded-xl bg-[#0f3693] text-white font-semibold text-sm"
-            >
-              Continuar →
-            </button>
-          )}
+      {/* Content */}
+      <div className="p-4 space-y-4">
+        {slot('dni', 'DNI/NIE (parte delantera y trasera)', { multiple: true, required: titularKey === 't1' })}
+        {tipoTrabajador !== 'autonomo' && slot('nominas', 'Últimas 3 nóminas', { multiple: true })}
+        {slot('renta', 'Declaración de la renta')}
+        {tipoTrabajador === 'gibraltar' && slot('p7', 'P7')}
+        {tipoTrabajador === 'autonomo' && (
+          <>
+            {slot('recibosAutonomo', '3 últimos recibos cuota autónomo', { multiple: true })}
+            {slot('recibosSS', 'Recibos pago seg. social', { multiple: true })}
+            {slot('mod131', 'Mod 131 IRPF trimestral', { multiple: true })}
+            {slot('mod303', 'Modelo 303 IVA trimestral', { multiple: true })}
+            {slot('mod390', 'Mod 390 IVA (si aplica)')}
+          </>
+        )}
+        {slot('vidaLaboral', tipoTrabajador === 'gibraltar' ? 'Vida Laboral España' : 'Vida laboral')}
+        {tipoTrabajador === 'gibraltar' && slot('vidaLaboralGib', 'Vida laboral Gibraltar')}
+        {tipoTrabajador !== 'autonomo' && slot('contrato', 'Contrato de trabajo')}
+
+        {/* Documentos adicionales */}
+        <div className="border-t border-gray-100 pt-4">
+          <h4 className="font-semibold text-[#0f3693] text-xs uppercase tracking-wide mb-1">Documentos adicionales</h4>
+          <p className="text-gray-500 text-xs mb-3 leading-relaxed">
+            Sube cualquier otra documentación que nos pueda ayudar: certificados, recibos de préstamos, cartas de empleo, etc.
+          </p>
+          {(['extra1', 'extra2', 'extra3'] as const).map((field, i) => (
+            <div key={field} className="mb-3">
+              <FileUploadSlot
+                label={`Documento adicional ${i + 1}`}
+                fieldName={`${titularKey}_${field}`}
+                files={docs[field]}
+                onFiles={handleDocFiles(titularKey, field)}
+              />
+            </div>
+          ))}
         </div>
-      )}
+
+        {onContinue && (
+          <button
+            type="button"
+            onClick={onContinue}
+            className="w-full py-3 rounded-xl bg-[#0f3693] text-white font-semibold text-sm"
+          >
+            Continuar →
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -544,59 +493,31 @@ interface InmuebleDocs {
 interface InmuebleDocSectionProps {
   docs: InmuebleDocs
   onFiles: (field: keyof InmuebleDocs) => (files: File[]) => void
-  collapsible: boolean
-  isOpen: boolean
-  onToggle: () => void
 }
 
-function InmuebleDocSection({ docs, onFiles, collapsible, isOpen, onToggle }: InmuebleDocSectionProps) {
-  const content = (
-    <>
-      <FileUploadSlot
-        label="Nota simple del inmueble"
-        fieldName="inmueble_notaSimple"
-        files={docs.notaSimple}
-        onFiles={onFiles('notaSimple')}
-      />
-      <FileUploadSlot
-        label="Contrato de arras"
-        fieldName="inmueble_arras"
-        files={docs.arras}
-        onFiles={onFiles('arras')}
-      />
-    </>
-  )
-
-  if (!collapsible) return <div>{content}</div>
-
+function InmuebleDocSection({ docs, onFiles }: InmuebleDocSectionProps) {
   return (
-    <div className="mb-4 border border-gray-200 rounded-2xl overflow-hidden bg-white">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-gray-50 transition-colors"
-      >
-        <div className="flex items-center gap-3 text-left">
-          <span className="w-7 h-7 rounded-full bg-[#ffbeb8] text-[#0f3693] text-sm flex items-center justify-center flex-shrink-0">
-            🏠
-          </span>
-          <div>
-            <p className="text-sm font-semibold text-[#0f3693]">Inmueble</p>
-            <p className="text-xs text-gray-400">Documentos compartidos del inmueble</p>
-          </div>
+    <div className="mb-4 rounded-2xl border-2 border-[#0f3693]/20 bg-white shadow-sm overflow-hidden">
+      <div className="bg-[#0f3693]/[0.06] px-4 py-3 border-b border-[#0f3693]/10">
+        <div className="flex items-center gap-2">
+          <span className="w-6 h-6 rounded-full bg-[#ffbeb8] text-[#0f3693] text-xs flex items-center justify-center font-bold shrink-0">🏠</span>
+          <h3 className="font-semibold text-[#0f3693] text-sm">Datos de la Vivienda</h3>
         </div>
-        <svg
-          className={`w-5 h-5 text-gray-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
-          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      {isOpen && (
-        <div className="px-3 pb-3 pt-2 border-t border-gray-100">
-          {content}
-        </div>
-      )}
+      </div>
+      <div className="p-4 space-y-4">
+        <FileUploadSlot
+          label="Nota simple del inmueble"
+          fieldName="inmueble_notaSimple"
+          files={docs.notaSimple}
+          onFiles={onFiles('notaSimple')}
+        />
+        <FileUploadSlot
+          label="Contrato de arras"
+          fieldName="inmueble_arras"
+          files={docs.arras}
+          onFiles={onFiles('arras')}
+        />
+      </div>
     </div>
   )
 }
@@ -613,7 +534,7 @@ export default function NuevoPage() {
   const [docs, setDocs] = useState<AllDocs>(emptyAllDocs())
   const [extraLabels, setExtraLabels] = useState<{ t1: ExtraLabels; t2: ExtraLabels }>({ t1: emptyExtraLabels(), t2: emptyExtraLabels() })
   const [inmuebleDocs, setInmuebleDocs] = useState<InmuebleDocs>({ notaSimple: [], arras: [] })
-  const [openSections, setOpenSections] = useState({ t1: true, t2: false, inmueble: false })
+  const [revealed, setRevealed] = useState({ t1: false, t2: false, inmueble: false })
   const [error, setError] = useState<string | null>(null)
   const [clienteDni, setClienteDni] = useState('')
   const errorRef = useRef<HTMLDivElement>(null)
@@ -673,9 +594,9 @@ export default function NuevoPage() {
   const handleExtraLabelT2 = useCallback((field: keyof ExtraLabels, value: string) => handleExtraLabel('t2', field, value), [handleExtraLabel])
 
   // ── Section toggle handlers (stable) ──────────────────────────────────────
-  const toggleT1 = useCallback(() => setOpenSections(prev => ({ ...prev, t1: !prev.t1 })), [])
-  const toggleT2 = useCallback(() => setOpenSections(prev => ({ ...prev, t2: !prev.t2 })), [])
-  const toggleInmueble = useCallback(() => setOpenSections(prev => ({ ...prev, inmueble: !prev.inmueble })), [])
+  const revealT1 = useCallback(() => setRevealed(r => ({ ...r, t1: true })), [])
+  const revealT2 = useCallback(() => setRevealed(r => ({ ...r, t2: true })), [])
+  const revealInmueble = useCallback(() => setRevealed(r => ({ ...r, inmueble: true })), [])
 
   // ── Validation ─────────────────────────────────────────────────────────────
   const validateStep1 = () => {
@@ -711,7 +632,10 @@ export default function NuevoPage() {
       if (err) { setError(err); return }
     }
     setError(null)
-    setStep(s => s + 1)
+    setStep(s => {
+      if (s === 2) setRevealed({ t1: false, t2: false, inmueble: false })
+      return s + 1
+    })
   }
 
   const goBack = () => {
@@ -972,68 +896,56 @@ export default function NuevoPage() {
         {step === 3 && (
           <div>
             <h2 className="text-xl font-semibold text-[#0f3693] mb-2">Documentos</h2>
-            <p className="text-gray-500 text-sm mb-1">
-              Solo el <span className="font-medium text-[#0f3693]">DNI es obligatorio</span> para crear tu expediente hoy.
-            </p>
-            <p className="text-gray-400 text-xs mb-5">
-              Puedes añadir el resto más adelante desde <span className="font-medium text-[#0f3693]">Ya tengo expediente</span>.
-            </p>
 
-            {twoTitulares ? (
-              <>
-                <TitularDocSection
-                  titularKey="t1"
-                  titular={titulares[0]}
-                  docs={docs.t1}
-                  handleDocFiles={handleDocFiles}
-                  isOpen={openSections.t1}
-                  onToggle={toggleT1}
-                  onContinue={() => setOpenSections(prev => ({ ...prev, t1: false, t2: true }))}
-                  collapsible={true}
-                  extraLabels={extraLabels.t1}
-                  onExtraLabel={handleExtraLabelT1}
-                />
-                <TitularDocSection
-                  titularKey="t2"
-                  titular={titulares[1]}
-                  docs={docs.t2}
-                  handleDocFiles={handleDocFiles}
-                  isOpen={openSections.t2}
-                  onToggle={toggleT2}
-                  onContinue={() => setOpenSections(prev => ({ ...prev, t2: false, inmueble: true }))}
-                  collapsible={true}
-                  extraLabels={extraLabels.t2}
-                  onExtraLabel={handleExtraLabelT2}
-                />
-                <InmuebleDocSection
-                  docs={inmuebleDocs}
-                  onFiles={handleInmuebleFiles}
-                  collapsible={true}
-                  isOpen={openSections.inmueble}
-                  onToggle={toggleInmueble}
-                />
-              </>
-            ) : (
-              <>
-                <TitularDocSection
-                  titularKey="t1"
-                  titular={titulares[0]}
-                  docs={docs.t1}
-                  handleDocFiles={handleDocFiles}
-                  isOpen={true}
-                  onToggle={() => {}}
-                  collapsible={false}
-                  extraLabels={extraLabels.t1}
-                  onExtraLabel={handleExtraLabelT1}
-                />
-                <InmuebleDocSection
-                  docs={inmuebleDocs}
-                  onFiles={handleInmuebleFiles}
-                  collapsible={true}
-                  isOpen={openSections.inmueble}
-                  onToggle={toggleInmueble}
-                />
-              </>
+            {/* Intro card */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4">
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Sube aquí tu documentación personal y la del inmueble.
+              </p>
+              <p className="text-gray-400 text-xs mt-1 leading-relaxed">
+                Si no tienes todo ahora, no te preocupes — podrás añadir más documentos en cualquier momento desde{' '}
+                <span className="font-medium text-[#0f3693]">Ya tengo expediente</span>.
+                Solo necesitas subir tu <strong className="text-gray-500">DNI</strong> para crear tu expediente hoy.
+              </p>
+              {!revealed.t1 && (
+                <button
+                  type="button"
+                  onClick={revealT1}
+                  className="mt-4 w-full py-3 rounded-xl bg-[#0f3693] text-white font-medium text-sm"
+                >
+                  Continuar →
+                </button>
+              )}
+            </div>
+
+            {/* Titular 1 */}
+            {revealed.t1 && (
+              <TitularDocSection
+                titularKey="t1"
+                titular={titulares[0]}
+                docs={docs.t1}
+                handleDocFiles={handleDocFiles}
+                onContinue={twoTitulares ? revealT2 : revealInmueble}
+              />
+            )}
+
+            {/* Titular 2 (solo si hay pareja y se ha revelado) */}
+            {twoTitulares && revealed.t2 && (
+              <TitularDocSection
+                titularKey="t2"
+                titular={titulares[1]}
+                docs={docs.t2}
+                handleDocFiles={handleDocFiles}
+                onContinue={revealInmueble}
+              />
+            )}
+
+            {/* Inmueble */}
+            {revealed.inmueble && (
+              <InmuebleDocSection
+                docs={inmuebleDocs}
+                onFiles={handleInmuebleFiles}
+              />
             )}
           </div>
         )}
