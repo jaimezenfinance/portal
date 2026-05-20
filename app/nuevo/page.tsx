@@ -398,6 +398,7 @@ interface TitularDocSectionProps {
   handleDocFiles: (titularKey: 't1' | 't2', field: keyof TitularDocs) => (files: File[]) => void
   isOpen: boolean
   onToggle: () => void
+  onContinue?: () => void
   collapsible: boolean
   extraLabels: ExtraLabels
   onExtraLabel: (field: keyof ExtraLabels, value: string) => void
@@ -405,7 +406,7 @@ interface TitularDocSectionProps {
 
 function TitularDocSection({
   titularKey, titular, docs, handleDocFiles,
-  isOpen, onToggle, collapsible, extraLabels, onExtraLabel,
+  isOpen, onToggle, onContinue, collapsible, extraLabels, onExtraLabel,
 }: TitularDocSectionProps) {
   const { tipoTrabajador } = titular
   const fullName = [titular.nombre, titular.apellido1].filter(Boolean).join(' ') ||
@@ -475,7 +476,18 @@ function TitularDocSection({
   )
 
   if (!collapsible) {
-    return <div>{content}</div>
+    return (
+      <div>
+        <div className="flex items-center gap-3 mb-4">
+          <span className="w-7 h-7 rounded-full bg-[#0f3693] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</span>
+          <div>
+            <p className="text-base font-semibold text-[#0f3693]">Documentación de {fullName}</p>
+            {tipoTrabajador && <p className="text-xs text-gray-400">{WORKER_LABEL[tipoTrabajador]}</p>}
+          </div>
+        </div>
+        {content}
+      </div>
+    )
   }
 
   return (
@@ -507,6 +519,15 @@ function TitularDocSection({
       {isOpen && (
         <div className="px-3 pb-3 pt-2 border-t border-gray-100">
           {content}
+          {onContinue && (
+            <button
+              type="button"
+              onClick={onContinue}
+              className="w-full mt-4 py-3 rounded-xl bg-[#0f3693] text-white font-semibold text-sm"
+            >
+              Continuar →
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -592,7 +613,7 @@ export default function NuevoPage() {
   const [docs, setDocs] = useState<AllDocs>(emptyAllDocs())
   const [extraLabels, setExtraLabels] = useState<{ t1: ExtraLabels; t2: ExtraLabels }>({ t1: emptyExtraLabels(), t2: emptyExtraLabels() })
   const [inmuebleDocs, setInmuebleDocs] = useState<InmuebleDocs>({ notaSimple: [], arras: [] })
-  const [openSections, setOpenSections] = useState({ t1: true, t2: false, inmueble: true })
+  const [openSections, setOpenSections] = useState({ t1: true, t2: false, inmueble: false })
   const [error, setError] = useState<string | null>(null)
   const [clienteDni, setClienteDni] = useState('')
   const errorRef = useRef<HTMLDivElement>(null)
@@ -951,10 +972,11 @@ export default function NuevoPage() {
         {step === 3 && (
           <div>
             <h2 className="text-xl font-semibold text-[#0f3693] mb-2">Documentos</h2>
-            <p className="text-gray-500 text-sm mb-4">
-              Sube aquí tu documentación personal y la del inmueble.
-              Si no tienes todo ahora, podrás añadir más documentos más adelante desde{' '}
-              <span className="font-medium text-[#0f3693]">Ya tengo expediente</span>.
+            <p className="text-gray-500 text-sm mb-1">
+              Solo el <span className="font-medium text-[#0f3693]">DNI es obligatorio</span> para crear tu expediente hoy.
+            </p>
+            <p className="text-gray-400 text-xs mb-5">
+              Puedes añadir el resto más adelante desde <span className="font-medium text-[#0f3693]">Ya tengo expediente</span>.
             </p>
 
             {twoTitulares ? (
@@ -966,6 +988,7 @@ export default function NuevoPage() {
                   handleDocFiles={handleDocFiles}
                   isOpen={openSections.t1}
                   onToggle={toggleT1}
+                  onContinue={() => setOpenSections(prev => ({ ...prev, t1: false, t2: true }))}
                   collapsible={true}
                   extraLabels={extraLabels.t1}
                   onExtraLabel={handleExtraLabelT1}
@@ -977,6 +1000,7 @@ export default function NuevoPage() {
                   handleDocFiles={handleDocFiles}
                   isOpen={openSections.t2}
                   onToggle={toggleT2}
+                  onContinue={() => setOpenSections(prev => ({ ...prev, t2: false, inmueble: true }))}
                   collapsible={true}
                   extraLabels={extraLabels.t2}
                   onExtraLabel={handleExtraLabelT2}
