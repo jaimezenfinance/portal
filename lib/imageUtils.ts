@@ -1,6 +1,10 @@
 import sharp from 'sharp'
 import { PDFDocument } from 'pdf-lib'
 
+function isPdf(buffer: Buffer): boolean {
+  return buffer.length > 4 && buffer.slice(0, 4).toString('ascii') === '%PDF'
+}
+
 async function trimImage(buffer: Buffer): Promise<Buffer> {
   try {
     return await sharp(buffer)
@@ -25,6 +29,14 @@ async function imageToPdf(jpegBuffer: Buffer): Promise<Buffer> {
 }
 
 export async function combineDniImages(frontBuffer: Buffer, backBuffer: Buffer): Promise<Buffer> {
+  // If either file is a PDF, merge as PDF pages instead of compositing images
+  if (isPdf(frontBuffer) || isPdf(backBuffer)) {
+    return mergeFilesToPdf([
+      { buffer: frontBuffer, mimeType: isPdf(frontBuffer) ? 'application/pdf' : 'image/jpeg' },
+      { buffer: backBuffer, mimeType: isPdf(backBuffer) ? 'application/pdf' : 'image/jpeg' },
+    ])
+  }
+
   const front = await trimImage(frontBuffer)
   const back = await trimImage(backBuffer)
 
@@ -64,6 +76,7 @@ export async function combineDniImages(frontBuffer: Buffer, backBuffer: Buffer):
 }
 
 export async function singleDniToPdf(buffer: Buffer): Promise<Buffer> {
+  if (isPdf(buffer)) return buffer
   const trimmed = await trimImage(buffer)
   return imageToPdf(trimmed)
 }

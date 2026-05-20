@@ -991,14 +991,14 @@ export default function NuevoPage() {
             >
               Continuar →
             </button>
-          ) : (
+          ) : revealed.inmueble ? (
             <button
               onClick={handleSubmit}
               className="flex-1 py-3 rounded-xl bg-[#0f3693] text-white font-medium hover:bg-blue-800 transition-colors"
             >
               Enviar documentación ✓
             </button>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
