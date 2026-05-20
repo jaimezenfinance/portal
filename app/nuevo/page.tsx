@@ -301,7 +301,7 @@ function TitularForm({ index, data, onChange }: TitularFormProps) {
           <select
             value={data.tipoTrabajador}
             onChange={e => onChange(index, 'tipoTrabajador', e.target.value)}
-            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] bg-white text-gray-700"
+            className={`w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] bg-white ${data.tipoTrabajador === '' ? 'text-gray-400' : 'text-gray-700'}`}
           >
             <option value="" disabled>Selecciona tipo de trabajador</option>
             <option value="espana">Trabajador España</option>
