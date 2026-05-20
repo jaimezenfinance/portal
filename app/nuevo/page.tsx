@@ -8,7 +8,7 @@ import { compressImageFile, compressFiles } from '@/lib/compressImage'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type TipoTrabajador = 'espana' | 'gibraltar' | 'autonomo'
+type TipoTrabajador = '' | 'espana' | 'gibraltar' | 'autonomo'
 
 interface Titular {
   tipoTrabajador: TipoTrabajador
@@ -63,7 +63,7 @@ interface ExtraLabels {
 const emptyExtraLabels = (): ExtraLabels => ({ extra1: '', extra2: '', extra3: '' })
 
 const emptyTitular = (): Titular => ({
-  tipoTrabajador: 'espana',
+  tipoTrabajador: '',
   nombre: '', apellido1: '', edad: '', dni: '', telefono: '', email: '',
 })
 
@@ -301,8 +301,9 @@ function TitularForm({ index, data, onChange }: TitularFormProps) {
           <select
             value={data.tipoTrabajador}
             onChange={e => onChange(index, 'tipoTrabajador', e.target.value)}
-            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] bg-white"
+            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] bg-white text-gray-700"
           >
+            <option value="" disabled>Selecciona tipo de trabajador</option>
             <option value="espana">Trabajador España</option>
             <option value="gibraltar">Trabajador Gibraltar</option>
             <option value="autonomo">Autónom@</option>
@@ -384,6 +385,7 @@ function TitularForm({ index, data, onChange }: TitularFormProps) {
 // ─── TitularDocSection (module level) ────────────────────────────────────────
 
 const WORKER_LABEL: Record<TipoTrabajador, string> = {
+  '': '',
   espana: 'Trabajador España',
   gibraltar: 'Trabajador Gibraltar',
   autonomo: 'Autónom@',
@@ -582,7 +584,7 @@ function InmuebleDocSection({ docs, onFiles, collapsible, isOpen, onToggle }: In
 
 export default function NuevoPage() {
   const [step, setStep] = useState(1)
-  const [compraConPareja, setCompraConPareja] = useState(false)
+  const [compraConPareja, setCompraConPareja] = useState<boolean | null>(null)
   const [titulares, setTitulares] = useState<Titular[]>([emptyTitular()])
   const [inmueble, setInmueble] = useState<Inmueble>({
     tipoVia: 'C/', calle: '', area: '', precioCompra: '', entradaArras: '',
@@ -656,7 +658,9 @@ export default function NuevoPage() {
 
   // ── Validation ─────────────────────────────────────────────────────────────
   const validateStep1 = () => {
+    if (compraConPareja === null) return '¿Compras sol@ o con pareja?'
     for (const t of titulares) {
+      if (!t.tipoTrabajador) return 'Selecciona el tipo de trabajador.'
       if (!t.nombre || !t.apellido1 || !t.edad || !t.dni || !t.telefono || !t.email) {
         return 'Por favor, completa todos los campos de los titulares.'
       }
@@ -847,7 +851,7 @@ export default function NuevoPage() {
                 type="button"
                 onClick={() => handleTogglePareja(false)}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-medium border-2 transition-all
-                  ${!compraConPareja ? 'bg-[#0f3693] text-white border-[#0f3693]' : 'bg-white text-gray-600 border-gray-200'}`}
+                  ${compraConPareja === false ? 'bg-[#0f3693] text-white border-[#0f3693]' : 'bg-white text-gray-600 border-gray-200'}`}
               >
                 Compro sol@
               </button>
@@ -855,13 +859,13 @@ export default function NuevoPage() {
                 type="button"
                 onClick={() => handleTogglePareja(true)}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-medium border-2 transition-all
-                  ${compraConPareja ? 'bg-[#0f3693] text-white border-[#0f3693]' : 'bg-white text-gray-600 border-gray-200'}`}
+                  ${compraConPareja === true ? 'bg-[#0f3693] text-white border-[#0f3693]' : 'bg-white text-gray-600 border-gray-200'}`}
               >
                 Compro con pareja
               </button>
             </div>
 
-            {titulares.map((t, i) => (
+            {compraConPareja !== null && titulares.map((t, i) => (
               <TitularForm key={i} index={i} data={t} onChange={handleTitularChange} />
             ))}
           </div>
