@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Header from '@/components/Header'
+import HomeChecklist from '@/components/HomeChecklist'
 
 export default function Home() {
   return (
@@ -11,7 +12,7 @@ export default function Home() {
           <p>Desde aquí puedes enviarnos tu documentación de forma segura y organizada.</p>
           <p>En pocos minutos tendremos todo listo para avanzar con tu hipoteca.</p>
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 mb-8">
           <Link href="/nuevo">
             <div className="bg-white rounded-2xl shadow-md p-6 flex items-center gap-4 hover:shadow-lg hover:border-[#0f3693] border-2 border-transparent transition-all cursor-pointer">
               <div className="w-12 h-12 bg-[#0f3693] rounded-xl flex items-center justify-center text-2xl">📁</div>
@@ -31,6 +32,7 @@ export default function Home() {
             </div>
           </Link>
         </div>
+        <HomeChecklist />
         <div className="mt-6 border-t border-gray-200 pt-5 text-center">
           <p className="text-xs text-gray-400 leading-relaxed">
             🔒 La documentación que compartas se usará exclusivamente para gestionar tu expediente hipotecario.

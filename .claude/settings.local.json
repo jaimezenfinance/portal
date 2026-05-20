@@ -12,7 +12,10 @@
       "Bash(git -C /Users/jaimevalencia/CLAUDE/zen-portal/.claude/worktrees/elegant-wu-76747c log --oneline -3)",
       "Bash(xargs cat *)",
       "Bash(npx tsc *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(python3 -c ' *)",
+      "Bash(git stash *)",
+      "Bash(git pull *)"
     ]
   }
 }

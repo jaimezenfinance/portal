@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mockup – Zen Portal</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap');
+  * { font-family: 'Prompt', sans-serif; }
+  .navy { color: #0f3693; }
+  .bg-navy { background-color: #0f3693; }
+  .bg-salmon { background-color: #ffbeb8; }
+  .border-salmon { border-color: #ffbeb8; }
+  .section-card { transition: all 0.35s ease; }
+  .locked { opacity: 0.45; pointer-events: none; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 9999px; }
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- ─────────────────────────────────────────────────
+     HEADER
+───────────────────────────────────────────────── -->
+<header class="bg-navy text-white py-4 px-5 flex items-center gap-3 shadow-md sticky top-0 z-50">
+  <div class="w-10 h-10 rounded-full bg-[#ffbeb8] flex items-center justify-center font-bold text-[#0f3693] text-sm">Zen</div>
+  <span class="font-bold tracking-widest text-sm uppercase">Portal de Documentación</span>
+</header>
+
+<!-- ─────────────────────────────────────────────────
+     NAV TABS
+───────────────────────────────────────────────── -->
+<div class="max-w-lg mx-auto px-4 pt-6 pb-2 grid grid-cols-4 gap-1.5 text-xs font-semibold">
+  <button onclick="showSection('bienvenida')" id="tab-bienvenida"
+    class="py-2 rounded-xl border-2 border-[#0f3693] bg-[#0f3693] text-white transition-all">
+    🏠 Inicio
+  </button>
+  <button onclick="showSection('titulares')" id="tab-titulares"
+    class="py-2 rounded-xl border-2 border-gray-200 text-gray-500 bg-white transition-all">
+    👤 Titulares
+  </button>
+  <button onclick="showSection('nuevo')" id="tab-nuevo"
+    class="py-2 rounded-xl border-2 border-gray-200 text-gray-500 bg-white transition-all">
+    📋 Docs
+  </button>
+  <button onclick="showSection('expediente')" id="tab-expediente"
+    class="py-2 rounded-xl border-2 border-gray-200 text-gray-500 bg-white transition-all">
+    📁 Expte.
+  </button>
+</div>
+<div class="max-w-lg mx-auto px-4 pb-1">
+  <p class="text-[10px] text-gray-400 text-center">Mockup interactivo – pulsa los tabs para navegar</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SECCIÓN BIENVENIDA  –  PÁGINA DE INICIO
+═══════════════════════════════════════════════ -->
+<div id="section-bienvenida" class="max-w-lg mx-auto px-4 pb-16 pt-6">
+
+  <!-- Texto bienvenida (actual) -->
+  <div class="text-center text-[#0f3693] font-medium text-sm leading-relaxed mb-8 px-4 space-y-1">
+    <p>Gracias por confiar en Zen Finance.</p>
+    <p>Desde aquí puedes enviarnos tu documentación de forma segura y organizada.</p>
+    <p>En pocos minutos tendremos todo listo para avanzar con tu hipoteca.</p>
+  </div>
+
+  <!-- Dos opciones (actual) -->
+  <div class="flex flex-col gap-4 mb-8">
+    <div class="bg-white rounded-2xl shadow-md p-6 flex items-center gap-4 border-2 border-transparent hover:border-[#0f3693] hover:shadow-lg transition-all cursor-pointer">
+      <div class="w-12 h-12 bg-[#0f3693] rounded-xl flex items-center justify-center text-2xl shrink-0">📁</div>
+      <div>
+        <h2 class="font-semibold navy text-lg">Nuevo expediente</h2>
+        <p class="text-gray-500 text-sm">Soy cliente nuevo y quiero enviar mi documentación</p>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-md p-6 flex items-center gap-4 border-2 border-transparent hover:border-[#ffbeb8] hover:shadow-lg transition-all cursor-pointer">
+      <div class="w-12 h-12 bg-[#ffbeb8] rounded-xl flex items-center justify-center text-2xl shrink-0">🔁</div>
+      <div>
+        <h2 class="font-semibold navy text-lg">Ya tengo expediente</h2>
+        <p class="text-gray-500 text-sm">Ya soy cliente y quiero añadir documentos</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenido del botón "¿Qué necesito?" — inline -->
+  <div class="bg-gray-100 rounded-t-3xl overflow-hidden -mx-4 px-4 pt-1">
+
+    <!-- Cabecera -->
+    <div class="pt-4 pb-3 px-5 border-b border-gray-100">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold navy text-base">¿Qué documentos necesitas?</h3>
+      </div>
+      <p class="text-xs text-gray-400 mt-0.5">Solo el DNI es obligatorio para empezar.</p>
+    </div>
+
+    <div class="px-4 py-4 space-y-2 pb-6">
+
+      <!-- España -->
+      <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+        <button onclick="toggleAcordeon('ac-esp')" class="w-full flex items-center justify-between px-4 py-3 text-left">
+          <div class="flex items-center gap-2">
+            <span>🇪🇸</span>
+            <span class="font-semibold navy text-sm">Trabajador España</span>
+          </div>
+          <span id="ac-esp-icon" class="text-gray-400 text-xs">▼</span>
+        </button>
+        <div id="ac-esp" class="hidden border-t border-gray-100 px-4 py-3">
+          <ul class="space-y-2 text-sm">
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> DNI/NIE</li>
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Últimas 3 nóminas</li>
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Declaración de la renta</li>
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Vida laboral</li>
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Contrato de trabajo</li>
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Nota simple / Contrato de arras</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Gibraltar -->
+      <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+        <button onclick="toggleAcordeon('ac-gib')" class="w-full flex items-center justify-between px-4 py-3 text-left">
+          <div class="flex items-center gap-2">
+            <span>🇬🇮</span>
+            <span class="font-semibold navy text-sm">Trabajador Gibraltar</span>
+          </div>
+          <span id="ac-gib-icon" class="text-gray-400 text-xs">▼</span>
+        </button>
+        <div id="ac-gib" class="hidden border-t border-gray-100 px-4 py-3">
+          <ul class="space-y-2 text-sm">
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> DNI/NIE</li>
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Últimas 3 nóminas</li>
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Declaración de la renta</li>
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> P7</li>
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Vida laboral España</li>
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Vida laboral Gibraltar</li>
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Contrato de trabajo</li>
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Nota simple / Contrato de arras</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Autónomo -->
+      <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+        <button onclick="toggleAcordeon('ac-aut')" class="w-full flex items-center justify-between px-4 py-3 text-left">
+          <div class="flex items-center gap-2">
+            <span>💼</span>
+            <span class="font-semibold navy text-sm">Autónom@</span>
+          </div>
+          <span id="ac-aut-icon" class="text-gray-400 text-xs">▼</span>
+        </button>
+        <div id="ac-aut" class="hidden border-t border-gray-100 px-4 py-3">
+          <ul class="space-y-2 text-sm">
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> DNI/NIE</li>
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Declaración de la renta</li>
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> 3 recibos cuota autónomo</li>
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Recibos pago seg. social</li>
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Mod 131 / 303 / 390</li>
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Vida laboral</li>
+            <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Nota simple / Contrato de arras</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Disclaimer -->
+  <p class="text-[11px] text-gray-400 text-center leading-relaxed mt-4 pb-4">
+    Si no tienes todo ahora, podrás añadirlo más adelante desde <strong class="text-[#0f3693]">Ya tengo expediente</strong>.<br/>
+    Solo el DNI es obligatorio para crear tu expediente hoy.
+  </p>
+
+</div><!-- /section-bienvenida -->
+
+<!-- ═══════════════════════════════════════════════
+     SECCIÓN TITULARES  –  PASO 1
+═══════════════════════════════════════════════ -->
+<div id="section-titulares" class="max-w-lg mx-auto px-4 pb-32 pt-2">
+
+  <!-- Stepper -->
+  <div class="flex items-center justify-center gap-2 mb-5 mt-2">
+    <div class="flex flex-col items-center gap-1">
+      <div class="w-8 h-8 rounded-full bg-navy text-white flex items-center justify-center text-xs font-bold">1</div>
+      <span class="text-[10px] navy font-semibold">Titulares</span>
+    </div>
+    <div class="flex-1 h-0.5 bg-gray-200 mb-4"></div>
+    <div class="flex flex-col items-center gap-1">
+      <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center text-xs font-bold">2</div>
+      <span class="text-[10px] text-gray-400">Inmueble</span>
+    </div>
+    <div class="flex-1 h-0.5 bg-gray-200 mb-4"></div>
+    <div class="flex flex-col items-center gap-1">
+      <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center text-xs font-bold">3</div>
+      <span class="text-[10px] text-gray-400">Documentos</span>
+    </div>
+  </div>
+
+  <h2 class="text-xl font-semibold navy mb-4">Titulares</h2>
+
+  <!-- Pregunta inicial -->
+  <div class="mb-4">
+    <p class="text-gray-500 text-sm mb-4">¿Cómo compras la vivienda?</p>
+    <div class="flex gap-2">
+      <button onclick="elegirTitulares(1)"
+        class="flex-1 py-3 rounded-xl text-sm font-medium border-2 border-gray-200 bg-white text-gray-600 hover:border-[#0f3693] hover:text-[#0f3693] transition-all">
+        Compro sol@
+      </button>
+      <button onclick="elegirTitulares(2)"
+        class="flex-1 py-3 rounded-xl text-sm font-medium border-2 border-gray-200 bg-white text-gray-600 hover:border-[#0f3693] hover:text-[#0f3693] transition-all">
+        Compro con pareja
+      </button>
+    </div>
+  </div>
+
+  <!-- Formulario Titular 1 (oculto inicialmente) -->
+  <div id="t-form-1" class="hidden">
+    <!-- Card Titular 1 -->
+    <div class="bg-gray-50 rounded-2xl p-4 mb-4">
+      <h3 class="font-semibold navy mb-3 text-xs uppercase tracking-wide">Titular 1</h3>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Tipo de trabajador <span class="text-red-500">*</span></label>
+          <select class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] bg-white text-gray-400">
+            <option value="" disabled selected>Selecciona tipo de trabajador</option>
+            <option>Trabajador España</option>
+            <option>Trabajador Gibraltar</option>
+            <option>Autónom@</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Nombre <span class="text-red-500">*</span></label>
+          <input type="text" placeholder="Nombre" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Primer apellido <span class="text-red-500">*</span></label>
+          <input type="text" placeholder="Primer apellido" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Edad <span class="text-red-500">*</span></label>
+          <input type="number" placeholder="Ej: 35" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">DNI/NIE <span class="text-red-500">*</span></label>
+          <input type="text" placeholder="12345678A" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Teléfono <span class="text-red-500">*</span></label>
+          <input type="tel" placeholder="600 000 000" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Email <span class="text-red-500">*</span></label>
+          <input type="email" placeholder="correo@ejemplo.com" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Card Titular 2 (solo si compra con pareja) -->
+    <div id="t-form-2" class="hidden bg-gray-50 rounded-2xl p-4 mb-4">
+      <h3 class="font-semibold navy mb-3 text-xs uppercase tracking-wide">Titular 2</h3>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Tipo de trabajador <span class="text-red-500">*</span></label>
+          <select class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] bg-white text-gray-400">
+            <option value="" disabled selected>Selecciona tipo de trabajador</option>
+            <option>Trabajador España</option>
+            <option>Trabajador Gibraltar</option>
+            <option>Autónom@</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Nombre <span class="text-red-500">*</span></label>
+          <input type="text" placeholder="Nombre" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Primer apellido <span class="text-red-500">*</span></label>
+          <input type="text" placeholder="Primer apellido" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Edad <span class="text-red-500">*</span></label>
+          <input type="number" placeholder="Ej: 35" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">DNI/NIE <span class="text-red-500">*</span></label>
+          <input type="text" placeholder="12345678A" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Teléfono <span class="text-red-500">*</span></label>
+          <input type="tel" placeholder="600 000 000" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Email <span class="text-red-500">*</span></label>
+          <input type="email" placeholder="correo@ejemplo.com" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f3693] placeholder:text-gray-300" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botón fijo abajo (solo visible cuando hay formulario) -->
+  <div id="t-btn-continuar" class="hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-3">
+    <div class="max-w-lg mx-auto">
+      <button class="w-full py-3 rounded-xl bg-navy text-white font-medium">Continuar →</button>
+    </div>
+  </div>
+
+</div><!-- /section-titulares -->
+
+<!-- ═══════════════════════════════════════════════
+     SECCIÓN /NUEVO  –  PASO 3: DOCUMENTOS
+═══════════════════════════════════════════════ -->
+<div id="section-nuevo" class="max-w-lg mx-auto px-4 pb-32 pt-2">
+
+  <!-- Stepper (simplified) -->
+  <div class="flex items-center justify-center gap-2 mb-5 mt-2">
+    <div class="flex flex-col items-center gap-1">
+      <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center text-xs font-bold">1</div>
+      <span class="text-[10px] text-gray-400">Titulares</span>
+    </div>
+    <div class="flex-1 h-0.5 bg-gray-200 mb-4"></div>
+    <div class="flex flex-col items-center gap-1">
+      <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center text-xs font-bold">2</div>
+      <span class="text-[10px] text-gray-400">Inmueble</span>
+    </div>
+    <div class="flex-1 h-0.5 bg-gray-200 mb-4"></div>
+    <div class="flex flex-col items-center gap-1">
+      <div class="w-8 h-8 rounded-full bg-navy text-white flex items-center justify-center text-xs font-bold">3</div>
+      <span class="text-[10px] navy font-semibold">Documentos</span>
+    </div>
+  </div>
+
+  <h2 class="text-xl font-semibold navy mb-1">Documentos</h2>
+
+  <!-- ── BLOQUE 0: Intro + primer Continuar ──────── -->
+  <div id="bloque-intro" class="section-card mb-4">
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+      <p class="text-gray-600 text-sm leading-relaxed">
+        Sube aquí tu documentación personal y la del inmueble.<br/>
+        <span class="text-gray-400 text-xs mt-1 block">
+          Si no tienes todo ahora, no te preocupes — podrás añadir más documentos en cualquier momento desde <strong class="text-[#0f3693]">Ya tengo expediente</strong>.<br/>
+          Solo necesitas subir tu <strong>DNI</strong> para crear tu expediente hoy.
+        </span>
+      </p>
+      <button onclick="reveal('bloque-t1')" class="mt-4 w-full py-3 rounded-xl bg-navy text-white font-medium text-sm hover:bg-blue-800 transition-colors">
+        Continuar →
+      </button>
+    </div>
+  </div>
+
+  <!-- ── BLOQUE 1: Documentos Titular #1 ─────────── -->
+  <div id="bloque-t1" class="section-card mb-4 hidden">
+    <div class="rounded-2xl border-2 border-[#0f3693]/20 bg-white shadow-sm overflow-hidden">
+      <!-- Header del bloque -->
+      <div class="bg-[#0f3693]/8 px-4 py-3 border-b border-[#0f3693]/10">
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-navy text-white text-xs flex items-center justify-center font-bold shrink-0">1</span>
+          <h3 class="font-semibold navy text-base">Documentación de Ana García</h3>
+        </div>
+        <p class="text-xs text-gray-500 mt-1 ml-8">📋 Trabajador España</p>
+      </div>
+      <div class="p-4 space-y-4">
+
+        <!-- DNI -->
+        <div>
+          <div class="flex items-center gap-1.5 mb-1">
+            <span class="text-sm font-medium text-gray-700">DNI/NIE (parte delantera y trasera)</span>
+            <span class="text-red-500 text-xs">*</span>
+            <span class="badge bg-amber-100 text-amber-700">Solo DNI obligatorio</span>
+          </div>
+          <!-- Acepta PDF + imágenes -->
+          <div class="w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">
+            📎 Pincha para subir (imagen o PDF)
+          </div>
+          <p class="text-[10px] text-gray-400 mt-1">Acepta imágenes y PDF. Si subes imagen, la convertimos a PDF automáticamente.</p>
+        </div>
+
+        <!-- Nóminas (Trabajador España) -->
+        <div>
+          <span class="text-sm font-medium text-gray-700 block mb-1">Últimas 3 nóminas</span>
+          <div class="w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">
+            📎 Pincha para subir (puedes seleccionar varios a la vez)
+          </div>
+        </div>
+
+        <!-- Renta -->
+        <div>
+          <span class="text-sm font-medium text-gray-700 block mb-1">Declaración de la renta</span>
+          <div class="w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">
+            📎 Pincha para subir
+          </div>
+        </div>
+
+        <!-- Vida laboral -->
+        <div>
+          <span class="text-sm font-medium text-gray-700 block mb-1">Vida laboral</span>
+          <div class="w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">
+            📎 Pincha para subir
+          </div>
+        </div>
+
+        <!-- Contrato -->
+        <div>
+          <span class="text-sm font-medium text-gray-700 block mb-1">Contrato de trabajo</span>
+          <div class="w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">
+            📎 Pincha para subir
+          </div>
+        </div>
+
+        <!-- ❌ "3 meses movimientos banco" ELIMINADO -->
+        <div class="bg-red-50 border border-red-200 rounded-xl px-3 py-2 flex items-center gap-2">
+          <span class="text-red-500 text-lg">🗑️</span>
+          <div>
+            <p class="text-xs font-semibold text-red-600 line-through">3 meses movimientos banco</p>
+            <p class="text-[10px] text-red-400">Eliminado en todos los perfiles y páginas</p>
+          </div>
+        </div>
+
+        <!-- Documentos adicionales -->
+        <div class="border-t border-gray-100 pt-4">
+          <h4 class="font-semibold navy text-xs uppercase tracking-wide mb-1">Documentos Adicionales</h4>
+          <!-- Texto intro nuevo -->
+          <p class="text-gray-500 text-xs mb-3 leading-relaxed">
+            Sube cualquier otra documentación que nos pueda ayudar para crear tu expediente: certificados, recibos de préstamos, cartas de empleo, etc.
+          </p>
+          <!-- ❌ Sin casilla "¿Qué documento es?" -->
+          <div class="bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-3 flex items-center gap-2">
+            <span class="text-red-500">🗑️</span>
+            <p class="text-[10px] text-red-400">Casilla «¿Qué documento es?» eliminada de todo el portal</p>
+          </div>
+          <div class="w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">
+            📎 Doc. adicional 1
+          </div>
+          <div class="mt-2 w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">
+            📎 Doc. adicional 2
+          </div>
+          <div class="mt-2 w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">
+            📎 Doc. adicional 3
+          </div>
+        </div>
+
+        <!-- Botón para revelar Titular #2 -->
+        <button onclick="reveal('bloque-t2')" class="w-full py-3 rounded-xl bg-navy text-white font-medium text-sm hover:bg-blue-800 transition-colors mt-2">
+          Continuar →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BLOQUE 2: Documentos Titular #2 ─────────── -->
+  <div id="bloque-t2" class="section-card mb-4 hidden">
+    <div class="rounded-2xl border-2 border-[#0f3693]/20 bg-white shadow-sm overflow-hidden">
+      <div class="bg-[#0f3693]/8 px-4 py-3 border-b border-[#0f3693]/10">
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-navy text-white text-xs flex items-center justify-center font-bold shrink-0">2</span>
+          <h3 class="font-semibold navy text-base">Documentación de Carlos López</h3>
+        </div>
+        <p class="text-xs text-gray-500 mt-1 ml-8">📋 Trabajador España</p>
+      </div>
+      <div class="p-4 space-y-4">
+
+        <div>
+          <div class="flex items-center gap-1.5 mb-1">
+            <span class="text-sm font-medium text-gray-700">DNI/NIE (parte delantera y trasera)</span>
+            <span class="text-red-500 text-xs">*</span>
+          </div>
+          <div class="w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">
+            📎 Pincha para subir (imagen o PDF)
+          </div>
+        </div>
+
+        <div>
+          <span class="text-sm font-medium text-gray-700 block mb-1">Últimas 3 nóminas</span>
+          <div class="w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">
+            📎 Pincha para subir (puedes seleccionar varios)
+          </div>
+        </div>
+
+        <div>
+          <span class="text-sm font-medium text-gray-700 block mb-1">Declaración de la renta</span>
+          <div class="w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">
+            📎 Pincha para subir
+          </div>
+        </div>
+
+        <div>
+          <span class="text-sm font-medium text-gray-700 block mb-1">Vida laboral</span>
+          <div class="w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">
+            📎 Pincha para subir
+          </div>
+        </div>
+
+        <div>
+          <span class="text-sm font-medium text-gray-700 block mb-1">Contrato de trabajo</span>
+          <div class="w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">
+            📎 Pincha para subir
+          </div>
+        </div>
+
+        <!-- Adicionales T2 -->
+        <div class="border-t border-gray-100 pt-4">
+          <h4 class="font-semibold navy text-xs uppercase tracking-wide mb-1">Documentos Adicionales</h4>
+          <p class="text-gray-500 text-xs mb-3 leading-relaxed">
+            Sube cualquier otra documentación que nos pueda ayudar: certificados, recibos de préstamos, cartas de empleo, etc.
+          </p>
+          <div class="w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">📎 Doc. adicional 1</div>
+          <div class="mt-2 w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">📎 Doc. adicional 2</div>
+          <div class="mt-2 w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">📎 Doc. adicional 3</div>
+        </div>
+
+        <button onclick="reveal('bloque-vivienda')" class="w-full py-3 rounded-xl bg-navy text-white font-medium text-sm hover:bg-blue-800 transition-colors mt-2">
+          Continuar →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BLOQUE 3: Documentos Vivienda ──────────── -->
+  <div id="bloque-vivienda" class="section-card mb-4 hidden">
+    <div class="rounded-2xl border-2 border-[#0f3693]/20 bg-white shadow-sm overflow-hidden">
+      <div class="bg-[#0f3693]/8 px-4 py-3 border-b border-[#0f3693]/10">
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-[#ffbeb8] text-[#0f3693] text-xs flex items-center justify-center font-bold">🏠</span>
+          <h3 class="font-semibold navy text-sm">Datos de la Vivienda</h3>
+        </div>
+      </div>
+      <div class="p-4 space-y-4">
+        <div>
+          <span class="text-sm font-medium text-gray-700 block mb-1">Nota simple del inmueble</span>
+          <div class="w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">📎 Pincha para subir</div>
+        </div>
+        <div>
+          <span class="text-sm font-medium text-gray-700 block mb-1">Contrato de arras</span>
+          <div class="w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">📎 Pincha para subir</div>
+        </div>
+
+        <button onclick="alert('✅ Se enviaría la documentación')" class="w-full py-3 rounded-xl bg-navy text-white font-semibold text-sm hover:bg-blue-800 transition-colors mt-2">
+          Enviar documentación ✓
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /section-nuevo -->
+
+
+<!-- ═══════════════════════════════════════════════
+     SECCIÓN /EXPEDIENTE
+═══════════════════════════════════════════════ -->
+<div id="section-expediente" class="max-w-lg mx-auto px-4 pb-32 pt-2 hidden">
+
+  <div class="mt-4 mb-6">
+    <!-- Nombre de referencia leído de Notion (campo "Name") -->
+    <h2 class="text-2xl font-bold navy">Hola, Ana María García 👋</h2>
+    <!-- "Ana María García" es el campo Name de Notion (nombre de referencia tuyo) -->
+    <p class="text-[10px] text-gray-400 mt-0.5 flex items-center gap-1">
+      <span class="bg-gray-100 text-gray-500 rounded px-1.5 py-0.5 font-mono">Notion → Name</span>
+      nombre de referencia del expediente
+    </p>
+    <p class="text-gray-500 text-sm mt-2">¿Qué documentos nos faltan?</p>
+  </div>
+
+  <!-- Badge expediente -->
+  <div class="bg-blue-50 rounded-2xl p-3 mb-5 flex items-center gap-2">
+    <span class="text-[#0f3693]">👤</span>
+    <div>
+      <p class="text-xs text-gray-500">Expediente encontrado</p>
+      <p class="text-sm font-semibold navy">Ana María García · 12345678A</p>
+    </div>
+  </div>
+
+  <!-- Leyenda -->
+  <div class="mb-4 bg-green-50 border border-green-200 rounded-xl px-3 py-2 text-xs text-green-700 flex items-center gap-1.5">
+    <span>✅</span>
+    <span>Los documentos tachados ya están en tu expediente. Puedes reemplazarlos si lo necesitas.</span>
+  </div>
+
+  <!-- TITULAR 1 — nombre leído de Notion "Titular #1" -->
+  <div class="rounded-2xl border-2 border-[#0f3693]/20 bg-white shadow-sm overflow-hidden mb-4">
+    <div class="bg-[#0f3693]/8 px-4 py-3 border-b border-[#0f3693]/10">
+      <div class="flex items-center gap-2">
+        <span class="w-6 h-6 rounded-full bg-navy text-white text-xs flex items-center justify-center font-bold shrink-0">1</span>
+        <h3 class="font-semibold navy text-base">Documentación de Ana García</h3>
+      </div>
+      <p class="text-xs text-gray-500 mt-1 ml-8">📋 Trabajador España</p>
+    </div>
+    <div class="p-4 space-y-3">
+      <!-- DNI ya subido -->
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-sm font-medium text-gray-400 line-through">DNI/NIE</span>
+          <span class="badge bg-green-100 text-green-700">✓ Subido</span>
+        </div>
+        <div class="w-full border-2 border-dashed border-green-200 rounded-xl py-4 px-3 text-center text-sm text-green-600 cursor-pointer hover:border-green-400 hover:bg-green-50 transition-colors">
+          🔄 Reemplazar archivo
+        </div>
+      </div>
+      <!-- Nóminas pendientes -->
+      <div>
+        <span class="text-sm font-medium text-gray-700 block mb-1">Últimas 3 nóminas</span>
+        <div class="w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">
+          📎 Pincha para subir
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TITULAR 2 — nombre leído de Notion "Titular #2" -->
+  <div class="rounded-2xl border-2 border-[#0f3693]/20 bg-white shadow-sm overflow-hidden mb-4">
+    <div class="bg-[#0f3693]/8 px-4 py-3 border-b border-[#0f3693]/10">
+      <div class="flex items-center gap-2">
+        <span class="w-6 h-6 rounded-full bg-navy text-white text-xs flex items-center justify-center font-bold shrink-0">2</span>
+        <h3 class="font-semibold navy text-base">Documentación de Carlos López</h3>
+      </div>
+      <p class="text-xs text-gray-500 mt-1 ml-8">📋 Trabajador Gibraltar</p>
+    </div>
+    <div class="p-4 space-y-3">
+      <div>
+        <span class="text-sm font-medium text-gray-700 block mb-1">DNI/NIE</span>
+        <div class="w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">
+          📎 Pincha para subir
+        </div>
+      </div>
+      <div>
+        <span class="text-sm font-medium text-gray-700 block mb-1">Declaración de la renta</span>
+        <div class="w-full border-2 border-dashed border-[#ffbeb8] rounded-xl py-4 px-3 text-center text-sm text-gray-500 cursor-pointer hover:border-[#0f3693] hover:bg-blue-50 transition-colors">
+          📎 Pincha para subir
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-3">
+    <div class="max-w-lg mx-auto">
+      <button onclick="alert('✅ Se subirían los documentos')" class="w-full py-3 rounded-xl bg-navy text-white font-medium">
+        Subir documentos ✓
+      </button>
+    </div>
+  </div>
+
+</div><!-- /section-expediente -->
+
+
+<!-- ─────────────────────────────────────────────────
+     BOTÓN FLOTANTE "¿Qué necesito?"
+───────────────────────────────────────────────── -->
+<button onclick="openChecklist()"
+  class="fixed bottom-24 right-4 z-40 flex items-center gap-2 bg-white border-2 border-[#0f3693] text-[#0f3693] text-xs font-bold px-3 py-2.5 rounded-full shadow-lg hover:bg-[#0f3693] hover:text-white transition-all">
+  <span class="text-base leading-none">📋</span> ¿Qué necesito?
+</button>
+
+<!-- ─────────────────────────────────────────────────
+     OVERLAY
+───────────────────────────────────────────────── -->
+<div id="checklist-overlay" onclick="closeChecklist()"
+  class="hidden fixed inset-0 bg-black/40 z-40 transition-opacity"></div>
+
+<!-- ─────────────────────────────────────────────────
+     BOTTOM SHEET – ACORDEÓN
+───────────────────────────────────────────────── -->
+<div id="checklist-sheet"
+  class="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl transform translate-y-full transition-transform duration-300 max-h-[80vh] overflow-y-auto">
+
+  <!-- Handle + cabecera -->
+  <div class="sticky top-0 bg-white pt-3 pb-3 px-5 border-b border-gray-100 rounded-t-3xl">
+    <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-3"></div>
+    <div class="flex items-center justify-between">
+      <h3 class="font-bold navy text-base">¿Qué documentos necesitas?</h3>
+      <button onclick="closeChecklist()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+    </div>
+    <p class="text-xs text-gray-400 mt-0.5">Solo el DNI es obligatorio para empezar.</p>
+  </div>
+
+  <div class="px-4 py-4 space-y-2 pb-10">
+
+    <!-- España -->
+    <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+      <button onclick="toggleAcordeon('sh-esp')" class="w-full flex items-center justify-between px-4 py-3 text-left">
+        <div class="flex items-center gap-2">
+          <span>🇪🇸</span>
+          <span class="font-semibold navy text-sm">Trabajador España</span>
+        </div>
+        <span id="sh-esp-icon" class="text-gray-400 text-xs">▼</span>
+      </button>
+      <div id="sh-esp" class="hidden border-t border-gray-100 px-4 py-3">
+        <ul class="space-y-2 text-sm">
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> DNI/NIE</li>
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Últimas 3 nóminas</li>
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Declaración de la renta</li>
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Vida laboral</li>
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Contrato de trabajo</li>
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Nota simple / Contrato de arras</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Gibraltar -->
+    <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+      <button onclick="toggleAcordeon('sh-gib')" class="w-full flex items-center justify-between px-4 py-3 text-left">
+        <div class="flex items-center gap-2">
+          <span>🇬🇮</span>
+          <span class="font-semibold navy text-sm">Trabajador Gibraltar</span>
+        </div>
+        <span id="sh-gib-icon" class="text-gray-400 text-xs">▼</span>
+      </button>
+      <div id="sh-gib" class="hidden border-t border-gray-100 px-4 py-3">
+        <ul class="space-y-2 text-sm">
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> DNI/NIE</li>
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Últimas 3 nóminas</li>
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Declaración de la renta</li>
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> P7</li>
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Vida laboral España</li>
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Vida laboral Gibraltar</li>
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Contrato de trabajo</li>
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Nota simple / Contrato de arras</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Autónomo -->
+    <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+      <button onclick="toggleAcordeon('sh-aut')" class="w-full flex items-center justify-between px-4 py-3 text-left">
+        <div class="flex items-center gap-2">
+          <span>💼</span>
+          <span class="font-semibold navy text-sm">Autónom@</span>
+        </div>
+        <span id="sh-aut-icon" class="text-gray-400 text-xs">▼</span>
+      </button>
+      <div id="sh-aut" class="hidden border-t border-gray-100 px-4 py-3">
+        <ul class="space-y-2 text-sm">
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> DNI/NIE</li>
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Declaración de la renta</li>
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> 3 recibos cuota autónomo</li>
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Recibos pago seg. social</li>
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Mod 131 / 303 / 390</li>
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Vida laboral</li>
+          <li class="flex items-center gap-2 text-gray-500"><span class="w-4 h-4 rounded-full bg-gray-100 text-[9px] flex items-center justify-center shrink-0">○</span> Nota simple / Contrato de arras</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────
+     LEYENDA DE CAMBIOS
+───────────────────────────────────────────────── -->
+<div id="leyenda" class="max-w-lg mx-auto px-4 pb-10 mt-4">
+  <details class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+    <summary class="font-semibold navy text-sm cursor-pointer">📝 Resumen de todos los cambios propuestos</summary>
+    <ul class="mt-3 space-y-2 text-xs text-gray-600 list-none">
+      <li>✅ <strong>Reveal progresivo:</strong> Intro → T1 docs → T2 docs → Vivienda, cada uno con «Continuar»</li>
+      <li>✅ <strong>Texto intro mejorado:</strong> explica que con solo el DNI se crea el expediente y que pueden añadir más desde "Ya tengo expediente"</li>
+      <li>✅ <strong>PDF en DNI:</strong> acepta PDF; en todos los slots se acepta PDF y cualquier imagen, que se convierte automáticamente a PDF</li>
+      <li>🗑️ <strong>«3 meses movimientos banco»:</strong> eliminado de todos los perfiles y páginas</li>
+      <li>✅ <strong>Documentos Adicionales:</strong> nuevo texto de intro explicando qué subir</li>
+      <li>🗑️ <strong>«¿Qué documento es?»:</strong> eliminado de todo el portal</li>
+      <li>✅ <strong>Expediente – bienvenida:</strong> lee el campo <code class="bg-gray-100 px-1 rounded">Name</code> de Notion (tu nombre de referencia)</li>
+      <li>✅ <strong>Expediente – titulares:</strong> cada sección lee <code class="bg-gray-100 px-1 rounded">Titular #1</code> / <code class="bg-gray-100 px-1 rounded">Titular #2</code> de Notion</li>
+    </ul>
+  </details>
+</div>
+
+<script>
+  const TABS = ['bienvenida', 'titulares', 'nuevo', 'expediente']
+
+  function showSection(name) {
+    TABS.forEach(t => {
+      document.getElementById('section-' + t).classList.add('hidden')
+      document.getElementById('tab-' + t).className = 'py-2 rounded-xl border-2 border-gray-200 text-gray-500 bg-white transition-all text-xs font-semibold'
+    })
+    document.getElementById('section-' + name).classList.remove('hidden')
+    document.getElementById('tab-' + name).className = 'py-2 rounded-xl border-2 border-[#0f3693] bg-[#0f3693] text-white transition-all text-xs font-semibold'
+    if (name !== 'titulares') document.getElementById('t-btn-continuar').classList.add('hidden')
+    window.scrollTo(0, 0)
+  }
+
+  // ── Botón flotante checklist ─────────────────────
+  function openChecklist() {
+    document.getElementById('checklist-overlay').classList.remove('hidden')
+    document.getElementById('checklist-sheet').style.transform = 'translateY(0)'
+  }
+  function closeChecklist() {
+    document.getElementById('checklist-overlay').classList.add('hidden')
+    document.getElementById('checklist-sheet').style.transform = 'translateY(100%)'
+  }
+
+  // ── Bienvenida: acordeón ─────────────────────────
+  function toggleAcordeon(id) {
+    const el = document.getElementById(id)
+    const icon = document.getElementById(id + '-icon')
+    const open = !el.classList.contains('hidden')
+    el.classList.toggle('hidden', open)
+    icon.textContent = open ? '▼' : '▲'
+  }
+
+  // ── Titulares ────────────────────────────────────
+  function elegirTitulares(n) {
+    const btns = document.querySelectorAll('#section-titulares > div:nth-child(3) .flex button')
+    btns.forEach((b, i) => {
+      b.className = (i + 1 === n)
+        ? 'flex-1 py-3 rounded-xl text-sm font-medium border-2 border-[#0f3693] bg-[#0f3693] text-white transition-all'
+        : 'flex-1 py-3 rounded-xl text-sm font-medium border-2 border-gray-200 bg-white text-gray-600 transition-all'
+    })
+    document.getElementById('t-form-1').classList.remove('hidden')
+    const t2 = document.getElementById('t-form-2')
+    if (n === 2) t2.classList.remove('hidden')
+    else t2.classList.add('hidden')
+    document.getElementById('t-btn-continuar').classList.remove('hidden')
+    setTimeout(() => document.getElementById('t-form-1').scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+  }
+
+  function reveal(id) {
+    const el = document.getElementById(id)
+    el.classList.remove('hidden')
+    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+  }
+
+  // Start
+  showSection('bienvenida')
+</script>
+</body>
+</html>
