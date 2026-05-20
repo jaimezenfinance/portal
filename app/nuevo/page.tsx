@@ -396,11 +396,10 @@ interface TitularDocSectionProps {
   titular: Titular
   docs: TitularDocs
   handleDocFiles: (titularKey: 't1' | 't2', field: keyof TitularDocs) => (files: File[]) => void
-  onContinue?: () => void
 }
 
 function TitularDocSection({
-  titularKey, titular, docs, handleDocFiles, onContinue,
+  titularKey, titular, docs, handleDocFiles,
 }: TitularDocSectionProps) {
   const { tipoTrabajador } = titular
   const num = titularKey === 't1' ? '1' : '2'
@@ -469,15 +468,6 @@ function TitularDocSection({
           ))}
         </div>
 
-        {onContinue && (
-          <button
-            type="button"
-            onClick={onContinue}
-            className="w-full py-3 rounded-xl bg-[#0f3693] text-white font-semibold text-sm"
-          >
-            Continuar →
-          </button>
-        )}
       </div>
     </div>
   )
@@ -593,10 +583,30 @@ export default function NuevoPage() {
   const handleExtraLabelT1 = useCallback((field: keyof ExtraLabels, value: string) => handleExtraLabel('t1', field, value), [handleExtraLabel])
   const handleExtraLabelT2 = useCallback((field: keyof ExtraLabels, value: string) => handleExtraLabel('t2', field, value), [handleExtraLabel])
 
+  // ── Section reveal refs (for auto-scroll) ─────────────────────────────────
+  const t1Ref = useRef<HTMLDivElement>(null)
+  const t2Ref = useRef<HTMLDivElement>(null)
+  const inmuebleRef = useRef<HTMLDivElement>(null)
+
   // ── Section toggle handlers (stable) ──────────────────────────────────────
-  const revealT1 = useCallback(() => setRevealed(r => ({ ...r, t1: true })), [])
-  const revealT2 = useCallback(() => setRevealed(r => ({ ...r, t2: true })), [])
-  const revealInmueble = useCallback(() => setRevealed(r => ({ ...r, inmueble: true })), [])
+  const revealT1 = useCallback(() => {
+    setRevealed(r => ({ ...r, t1: true }))
+    setTimeout(() => t1Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
+  }, [])
+  const revealT2 = useCallback(() => {
+    setRevealed(r => ({ ...r, t2: true }))
+    setTimeout(() => t2Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
+  }, [])
+  const revealInmueble = useCallback(() => {
+    setRevealed(r => ({ ...r, inmueble: true }))
+    setTimeout(() => inmuebleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
+  }, [])
+
+  const docNext = useCallback(() => {
+    if (!revealed.t1) { revealT1() }
+    else if (titulares.length > 1 && !revealed.t2) { revealT2() }
+    else { revealInmueble() }
+  }, [revealed, titulares.length, revealT1, revealT2, revealInmueble])
 
   // ── Validation ─────────────────────────────────────────────────────────────
   const validateStep1 = () => {
@@ -907,45 +917,40 @@ export default function NuevoPage() {
                 <span className="font-medium text-[#0f3693]">Ya tengo expediente</span>.
                 Solo necesitas subir tu <strong className="text-gray-500">DNI</strong> para crear tu expediente hoy.
               </p>
-              {!revealed.t1 && (
-                <button
-                  type="button"
-                  onClick={revealT1}
-                  className="mt-4 w-full py-3 rounded-xl bg-[#0f3693] text-white font-medium text-sm"
-                >
-                  Continuar →
-                </button>
-              )}
             </div>
 
             {/* Titular 1 */}
             {revealed.t1 && (
-              <TitularDocSection
-                titularKey="t1"
-                titular={titulares[0]}
-                docs={docs.t1}
-                handleDocFiles={handleDocFiles}
-                onContinue={twoTitulares ? revealT2 : revealInmueble}
-              />
+              <div ref={t1Ref}>
+                <TitularDocSection
+                  titularKey="t1"
+                  titular={titulares[0]}
+                  docs={docs.t1}
+                  handleDocFiles={handleDocFiles}
+                />
+              </div>
             )}
 
             {/* Titular 2 (solo si hay pareja y se ha revelado) */}
             {twoTitulares && revealed.t2 && (
-              <TitularDocSection
-                titularKey="t2"
-                titular={titulares[1]}
-                docs={docs.t2}
-                handleDocFiles={handleDocFiles}
-                onContinue={revealInmueble}
-              />
+              <div ref={t2Ref}>
+                <TitularDocSection
+                  titularKey="t2"
+                  titular={titulares[1]}
+                  docs={docs.t2}
+                  handleDocFiles={handleDocFiles}
+                />
+              </div>
             )}
 
             {/* Inmueble */}
             {revealed.inmueble && (
-              <InmuebleDocSection
-                docs={inmuebleDocs}
-                onFiles={handleInmuebleFiles}
-              />
+              <div ref={inmuebleRef}>
+                <InmuebleDocSection
+                  docs={inmuebleDocs}
+                  onFiles={handleInmuebleFiles}
+                />
+              </div>
             )}
           </div>
         )}
@@ -998,7 +1003,14 @@ export default function NuevoPage() {
             >
               Enviar documentación ✓
             </button>
-          ) : null}
+          ) : (
+            <button
+              onClick={docNext}
+              className="flex-1 py-3 rounded-xl bg-[#0f3693] text-white font-medium hover:bg-blue-800 transition-colors"
+            >
+              Continuar →
+            </button>
+          )}
         </div>
       </div>
     </div>
