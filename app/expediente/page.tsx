@@ -46,6 +46,12 @@ const emptyExtraLabels = (): ExtraLabels => ({ extra1: '', extra2: '', extra3: '
 
 type TipoTrabajador = 'espana' | 'gibraltar' | 'autonomo'
 
+const WORKER_LABEL: Record<TipoTrabajador, string> = {
+  espana: 'Trabajador España',
+  gibraltar: 'Trabajador Gibraltar',
+  autonomo: 'Autónom@',
+}
+
 interface Docs {
   dni: File[]
   nominas: File[]
@@ -177,13 +183,11 @@ interface DocSlotsProps {
   onToggle: () => void
   collapsible: boolean
   label: string
-  extraLabels: ExtraLabels
-  onExtraLabel: (field: keyof ExtraLabels, value: string) => void
 }
 
 function DocSlots({
   tKey, docs, onFiles, existingFiles, tipoTrabajador,
-  isOpen, onToggle, collapsible, label, extraLabels, onExtraLabel,
+  isOpen, onToggle, collapsible, label,
 }: DocSlotsProps) {
   const slot = (field: keyof Docs, slotLabel: string, opts?: { multiple?: boolean }) => {
     const alreadyUploaded = existingFiles.length > 0 && hasPrefix(existingFiles, DOC_PREFIXES[field])
@@ -229,59 +233,57 @@ function DocSlots({
       {/* Contrato — solo España y Gibraltar */}
       {tipoTrabajador !== 'autonomo' && slot('contrato', 'Contrato de trabajo')}
 
-      {slot('bancarios', '3 meses movimientos banco', { multiple: true })}
-
-      {/* ── Separador documentos adicionales ── */}
-      <div className="flex items-center gap-3 my-4">
-        <div className="flex-1 h-px bg-gray-100" />
-        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Documentos adicionales</span>
-        <div className="flex-1 h-px bg-gray-100" />
+      {/* Documentos adicionales */}
+      <div className="border-t border-gray-100 pt-4">
+        <h4 className="font-semibold text-[#0f3693] text-xs uppercase tracking-wide mb-1">Documentos adicionales</h4>
+        <p className="text-gray-500 text-xs mb-3 leading-relaxed">
+          Sube cualquier otra documentación que nos pueda ayudar: certificados, recibos de préstamos, cartas de empleo, etc.
+        </p>
+        {(['extra1', 'extra2', 'extra3'] as const).map((field, i) => {
+          const alreadyUploaded = existingFiles.length > 0 && hasPrefix(existingFiles, DOC_PREFIXES[field])
+          return (
+            <div key={field} className="mb-3">
+              <FileUploadSlot
+                label={`Documento adicional ${i + 1}`}
+                fieldName={`${tKey}_${field}`}
+                files={docs[field]}
+                onFiles={onFiles(tKey, field)}
+                alreadyUploaded={alreadyUploaded}
+              />
+            </div>
+          )
+        })}
       </div>
-
-      {(['extra1', 'extra2', 'extra3'] as const).map((field, i) => {
-        const alreadyUploaded = existingFiles.length > 0 && hasPrefix(existingFiles, DOC_PREFIXES[field])
-        return (
-          <div key={field} className="mb-4">
-            <span className={`text-sm font-medium block mb-1 ${docs[field].length > 0 || alreadyUploaded ? 'line-through text-gray-400' : 'text-gray-700'}`}>
-              Documento adicional {i + 1}
-            </span>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">¿Qué documento es?</p>
-            <input
-              type="text"
-              value={extraLabels[field]}
-              onChange={e => onExtraLabel(field, e.target.value)}
-              placeholder="Ej: certificados, extractos, contratos..."
-              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-[#0f3693] bg-white placeholder:text-gray-300 placeholder:font-light"
-            />
-            <FileUploadSlot
-              label=""
-              fieldName={`${tKey}_${field}`}
-              files={docs[field]}
-              onFiles={onFiles(tKey, field)}
-              alreadyUploaded={alreadyUploaded}
-            />
-          </div>
-        )
-      })}
     </>
   )
 
-  if (!collapsible) return <div>{content}</div>
+  if (!collapsible) return (
+    <div>
+      <div className="flex items-center gap-3 mb-4">
+        <span className="w-6 h-6 rounded-full bg-[#0f3693] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">{tKey === 't1' ? '1' : '2'}</span>
+        <div>
+          <p className="text-base font-semibold text-[#0f3693]">{label}</p>
+          <p className="text-xs text-gray-500">📋 {WORKER_LABEL[tipoTrabajador]}</p>
+        </div>
+      </div>
+      {content}
+    </div>
+  )
 
   return (
-    <div className="mb-4 border border-gray-200 rounded-2xl overflow-hidden bg-white">
+    <div className="mb-4 rounded-2xl border-2 border-[#0f3693]/20 bg-white shadow-sm overflow-hidden">
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 bg-[#0f3693]/[0.06] border-b border-[#0f3693]/10 hover:bg-[#0f3693]/[0.10] transition-colors"
       >
-        <div className="flex items-center gap-3 text-left">
-          <span className="w-7 h-7 rounded-full bg-[#0f3693] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+        <div className="flex items-center gap-2 text-left">
+          <span className="w-6 h-6 rounded-full bg-[#0f3693] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
             {tKey === 't1' ? '1' : '2'}
           </span>
           <div>
-            <p className="text-sm font-semibold text-[#0f3693]">{label}</p>
-            <p className="text-xs text-gray-400">Toca para subir documentación</p>
+            <p className="text-base font-semibold text-[#0f3693]">{label}</p>
+            <p className="text-xs text-gray-500">📋 {WORKER_LABEL[tipoTrabajador]}</p>
           </div>
         </div>
         <svg
@@ -292,7 +294,7 @@ function DocSlots({
         </svg>
       </button>
       {isOpen && (
-        <div className="px-3 pb-3 pt-2 border-t border-gray-100">
+        <div className="px-3 pb-3 pt-2">
           {content}
         </div>
       )}
@@ -592,7 +594,6 @@ export default function ExpedientePage() {
                 tipoTrabajador={t1Type}
                 isOpen={openT1} onToggle={toggleT1}
                 collapsible={true} label={clientName}
-                extraLabels={extraLabelsT1} onExtraLabel={handleExtraLabelT1}
               />
               <DocSlots
                 tKey="t2" docs={docsT2} onFiles={handleFiles}
@@ -600,7 +601,6 @@ export default function ExpedientePage() {
                 tipoTrabajador={t2Type}
                 isOpen={openT2} onToggle={toggleT2}
                 collapsible={true} label={t2Name}
-                extraLabels={extraLabelsT2} onExtraLabel={handleExtraLabelT2}
               />
               <InmuebleDocSection
                 docs={docsInmueble} onFiles={handleInmuebleFiles}
@@ -616,7 +616,6 @@ export default function ExpedientePage() {
                 tipoTrabajador={t1Type}
                 isOpen={true} onToggle={() => {}}
                 collapsible={false} label={clientName}
-                extraLabels={extraLabelsT1} onExtraLabel={handleExtraLabelT1}
               />
               <InmuebleDocSection
                 docs={docsInmueble} onFiles={handleInmuebleFiles}
