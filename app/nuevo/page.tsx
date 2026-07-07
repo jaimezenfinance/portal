@@ -435,20 +435,20 @@ function TitularDocSection({
       <div className="p-4 space-y-4">
         {slot('dni', 'DNI/NIE (parte delantera y trasera)', { multiple: true, required: titularKey === 't1' })}
         {tipoTrabajador !== 'autonomo' && slot('nominas', 'Últimas 3 nóminas', { multiple: true })}
-        {slot('renta', 'Declaración de la renta')}
-        {tipoTrabajador === 'gibraltar' && slot('p7', 'P7')}
+        {slot('renta', 'Declaración de la renta', { multiple: true })}
+        {tipoTrabajador === 'gibraltar' && slot('p7', 'P7', { multiple: true })}
         {tipoTrabajador === 'autonomo' && (
           <>
             {slot('recibosAutonomo', '3 últimos recibos cuota autónomo', { multiple: true })}
             {slot('recibosSS', 'Recibos pago seg. social', { multiple: true })}
             {slot('mod131', 'Mod 131 IRPF trimestral', { multiple: true })}
             {slot('mod303', 'Modelo 303 IVA trimestral', { multiple: true })}
-            {slot('mod390', 'Mod 390 IVA (si aplica)')}
+            {slot('mod390', 'Mod 390 IVA (si aplica)', { multiple: true })}
           </>
         )}
-        {slot('vidaLaboral', tipoTrabajador === 'gibraltar' ? 'Vida Laboral España' : 'Vida laboral')}
-        {tipoTrabajador === 'gibraltar' && slot('vidaLaboralGib', 'Vida laboral Gibraltar')}
-        {tipoTrabajador !== 'autonomo' && slot('contrato', 'Contrato de trabajo')}
+        {slot('vidaLaboral', tipoTrabajador === 'gibraltar' ? 'Vida Laboral España' : 'Vida laboral', { multiple: true })}
+        {tipoTrabajador === 'gibraltar' && slot('vidaLaboralGib', 'Vida laboral Gibraltar', { multiple: true })}
+        {tipoTrabajador !== 'autonomo' && slot('contrato', 'Contrato de trabajo', { multiple: true })}
 
         {/* Documentos adicionales */}
         <div className="border-t border-gray-100 pt-4">
@@ -463,6 +463,7 @@ function TitularDocSection({
                 fieldName={`${titularKey}_${field}`}
                 files={docs[field]}
                 onFiles={handleDocFiles(titularKey, field)}
+                multiple
               />
             </div>
           ))}
@@ -500,12 +501,14 @@ function InmuebleDocSection({ docs, onFiles }: InmuebleDocSectionProps) {
           fieldName="inmueble_notaSimple"
           files={docs.notaSimple}
           onFiles={onFiles('notaSimple')}
+          multiple
         />
         <FileUploadSlot
           label="Contrato de arras"
           fieldName="inmueble_arras"
           files={docs.arras}
           onFiles={onFiles('arras')}
+          multiple
         />
       </div>
     </div>
