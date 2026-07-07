@@ -211,10 +211,10 @@ function DocSlots({
       {/* Nóminas — solo España y Gibraltar */}
       {tipoTrabajador !== 'autonomo' && slot('nominas', 'Últimas 3 nóminas', { multiple: true })}
 
-      {slot('renta', 'Declaración de la renta')}
+      {slot('renta', 'Declaración de la renta', { multiple: true })}
 
       {/* P7 — solo Gibraltar */}
-      {tipoTrabajador === 'gibraltar' && slot('p7', 'P7')}
+      {tipoTrabajador === 'gibraltar' && slot('p7', 'P7', { multiple: true })}
 
       {/* Autónomo */}
       {tipoTrabajador === 'autonomo' && (
@@ -223,15 +223,15 @@ function DocSlots({
           {slot('recibosSS', 'Recibos pago seg. social', { multiple: true })}
           {slot('mod131', 'Mod 131 IRPF trimestral', { multiple: true })}
           {slot('mod303', 'Modelo 303 IVA trimestral', { multiple: true })}
-          {slot('mod390', 'Mod 390 IVA (si aplica)')}
+          {slot('mod390', 'Mod 390 IVA (si aplica)', { multiple: true })}
         </>
       )}
 
-      {slot('vidaLaboral', tipoTrabajador === 'gibraltar' ? 'Vida laboral España' : 'Vida laboral')}
-      {tipoTrabajador === 'gibraltar' && slot('vidaLaboralGib', 'Vida laboral Gibraltar')}
+      {slot('vidaLaboral', tipoTrabajador === 'gibraltar' ? 'Vida laboral España' : 'Vida laboral', { multiple: true })}
+      {tipoTrabajador === 'gibraltar' && slot('vidaLaboralGib', 'Vida laboral Gibraltar', { multiple: true })}
 
       {/* Contrato — solo España y Gibraltar */}
-      {tipoTrabajador !== 'autonomo' && slot('contrato', 'Contrato de trabajo')}
+      {tipoTrabajador !== 'autonomo' && slot('contrato', 'Contrato de trabajo', { multiple: true })}
 
       {/* Documentos adicionales */}
       <div className="border-t border-gray-100 pt-4">
@@ -249,6 +249,7 @@ function DocSlots({
                 files={docs[field]}
                 onFiles={onFiles(tKey, field)}
                 alreadyUploaded={alreadyUploaded}
+                multiple
               />
             </div>
           )
@@ -330,6 +331,7 @@ function InmuebleDocSection({ docs, onFiles, existingFiles, collapsible, isOpen,
         files={docs.notaSimple}
         onFiles={onFiles('notaSimple')}
         alreadyUploaded={alreadyNotaSimple}
+        multiple
       />
       <FileUploadSlot
         label="Contrato de arras"
@@ -337,6 +339,7 @@ function InmuebleDocSection({ docs, onFiles, existingFiles, collapsible, isOpen,
         files={docs.arras}
         onFiles={onFiles('arras')}
         alreadyUploaded={alreadyArras}
+        multiple
       />
     </>
   )
